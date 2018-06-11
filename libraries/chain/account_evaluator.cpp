@@ -38,8 +38,12 @@
 #include <graphene/chain/worker_object.hpp>
 
 #include <algorithm>
-//#include <graphene/wren/wren.hpp>
-#include "D:/bts/bitshares-core/libraries/wren/include/graphene/wren/wren.hpp"
+
+#include "../wren/src/include/wren.hpp"
+#include "../wren/src/contract/smart_contract_output.hpp"
+
+#include <iostream>
+using namespace std;
 
 namespace graphene { namespace chain {
 
