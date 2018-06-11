@@ -4,9 +4,18 @@ add_library( graphene_elasticsearch
         elasticsearch_plugin.cpp
            )
 
-target_link_libraries( graphene_elasticsearch graphene_chain graphene_app curl )
+if(WIN32)
+	target_link_libraries( graphene_elasticsearch graphene_chain graphene_app ${CURL_LIBRARY} )
+else(WIN32)
+	target_link_libraries( graphene_elasticsearch graphene_chain graphene_app curl )
+endif(WIN32)
+
 target_include_directories( graphene_elasticsearch
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include" )
+
+if(WIN32)
+	INCLUDE_DIRECTORIES(${CURL_INCLUDE_DIR})
+endif(WIN32)
 
 if(MSVC)
   set_source_files_properties(elasticsearch_plugin.cpp PROPERTIES COMPILE_FLAGS "/bigobj" )

@@ -26,6 +26,11 @@ add_library( graphene_utilities
 target_link_libraries( graphene_utilities fc )
 target_include_directories( graphene_utilities
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include" )
+
+if(WIN32)
+	INCLUDE_DIRECTORIES(${CURL_INCLUDE_DIR})
+endif(WIN32)
+
 if (USE_PCH)
   set_target_properties(graphene_utilities PROPERTIES COTIRE_ADD_UNITY_BUILD FALSE)
   cotire(graphene_utilities)

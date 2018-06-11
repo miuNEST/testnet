@@ -776,6 +776,34 @@ class wallet_api
                                                        string referrer_account,
                                                        bool broadcast = false);
 
+
+//added by Victor Sun for smart_contract      
+      signed_transaction upload_smart_contract(string uploader,
+                                               string smart_contract_code,
+                                               bool broadcast = true);
+
+//added by Victor Sun for smart_contract      
+      signed_transaction upload_smart_contract_from_file(   string uploader,
+                                                            string smart_contract_code_path,
+                                                            bool broadcast = true);
+
+//added by Victor Sun for smart_contract
+      signed_transaction activate_smart_contract(     string activator,
+                                                      string smart_contract_id,
+                                                      string init_data,
+                                                      bool broadcast = true);
+
+//added by Victor Sun for smart_contract
+      signed_transaction call_smart_contract(   string caller,
+                                                string smart_contract_id,
+                                                string method_name_and_parameter,
+                                                bool broadcast = true);
+
+//added by Victor Sun for uploading data hash
+      signed_transaction upload_data_digest(string uploader,
+                                            string data_digest,
+                                            bool broadcast = true);
+
       /** Transfer an amount from one account to another.
        * @param from the name or id of the account sending the funds
        * @param to the name or id of the account receiving the funds

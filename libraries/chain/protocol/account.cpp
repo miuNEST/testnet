@@ -23,6 +23,10 @@
  */
 #include <graphene/chain/protocol/account.hpp>
 
+#include <fstream>
+#include <iostream>
+using namespace std;
+
 namespace graphene { namespace chain {
 
 /**
@@ -55,6 +59,16 @@ namespace graphene { namespace chain {
  * - All letters are lowercase
  * - Length is between (inclusive) GRAPHENE_MIN_ACCOUNT_NAME_LENGTH and GRAPHENE_MAX_ACCOUNT_NAME_LENGTH
  */
+
+int write_string_into_file(const std::string & file_name, std::string src)
+{
+      std::ofstream os_write(file_name, std::ofstream::app);
+      os_write<<src;
+      os_write<<endl;
+      os_write.close();
+      return 0;
+}
+
 bool is_valid_name( const string& name )
 { try {
     const size_t len = name.size();
@@ -278,6 +292,86 @@ void account_upgrade_operation::validate() const
 void account_transfer_operation::validate()const
 {
    FC_ASSERT( fee.amount >= 0 );
+}
+
+void smart_contract_upload_operation::validate()const
+{
+   FC_ASSERT( 0 >= 0 );//TODO: there are more condition to be checked // by Victor Sun
+   std::cout<<"the validate function of smart_contract_upload_operation is being called!"<<std::endl;
+   //将合约类的源代码写入到文件中去，这个后去迭代改造需要修改保存到数据库中去
+//   write_string_into_file("./test_sc.wren", this->smart_contract); 
+}
+
+void smart_contract_activate_operation::validate()const
+{
+   FC_ASSERT( 0 >= 0 );//TODO: there are more condition to be checked // by Victor Sun
+   std::cout<<"the validate function of smart_contract_activate_operation is being called!"<<std::endl;
+}
+
+void smart_contract_call_operation::validate()const //该函数需要对结构体中的成员变量值做修改，故只能将const注释掉,函数声明处也作相应处理 modified by Victor Sun
+{
+   FC_ASSERT( 0 >= 0 );//TODO: there are more condition to be checked
+   std::cout<<"the validate function of smart_contract_call_operation is being called!"<<std::endl;
+//   int len = 0;
+   //
+//   char* class_name_init = (char *)(this->class_name).data();
+
+ //  cout<<this->class_name<<endl;
+//   len = (this->class_name).length();
+//   char* class_name_init = (char *)malloc((len+1)*sizeof(char));
+//   (this->class_name).copy(class_name_init, len, 0);
+
+
+
+//   cout<<"len = (this->class_name).length() = "<<len<<endl;
+//   cout<<"class_name_init =  "<<class_name_init<<endl;
+
+//   class_name_init[len] = '\0';
+//   cout<<"class_name_init[4] =  "<<class_name_init[4]<<endl;
+   //
+   //
+   /*
+//   len = (this->method_name).length();
+   char* method_name_init = (char *)(this->method_name).data();
+
+   //
+   //将调用函数的参数列表转换格式
+//   len = (this->input_parameters).length();
+   char* input_parameters_init = (char *)(this->input_parameters).data();
+//   (this->input_parameters).copy(input_parameters_init, len, 0);
+//   input_parameters_init[len] = '\0';
+   cout<<"input_parameters_init = "<<input_parameters_init<<endl;
+//
+
+   container_of_all_smart_contracts_running _the_container;//定义一个容器
+   _the_container.insert_an_initialized_smart_contract_object( caller_init, smart_contract_code_init );//将合约放入容器
+//   _the_container.visit_container( );//遍历容器（其实只有一个元素）
+
+
+   int call_index = 1;
+   _the_container.call_smart_contract_in_container(call_index, class_name_init, method_name_init, input_parameters_init);
+
+//   free(class_name_init);
+//   free(method_name_init);
+//   free(input_parameters_init);
+   //调用结束之后，从容器中删除这个smart contract
+   _the_container.delete_the_initialized_smart_contract_object( call_index );
+
+   //_the_container这个容器被删除是要调用构造函数么？
+
+
+*/
+
+//end calling
+   std::cout<<"========================================================"<<std::endl;
+
+//   output_parameter = input_parameter + 101010101;
+}
+
+void data_digest_upload_operation::validate()const
+{
+   FC_ASSERT( 0 >= 0 );//TODO: there are more condition to be checked
+   std::cout<<"the validate function of data_digest_upload_operation is being called!"<<std::endl;
 }
 
 

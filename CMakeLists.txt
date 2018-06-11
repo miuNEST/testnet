@@ -102,6 +102,23 @@ if( WIN32 )
     SET(TCL_LIBS "${TCL_LIBS}${TCL_LIB_PATH}/${TCL_LIB_NAME}g${TCL_LIB_EXT}")
     SET(TCL_LIBRARY ${TCL_LIBS})
 
+	if(NOT DEFINED ENV{CURL_INCLUDE_DIR})
+	    message(FATAL_ERROR "not defined environment variable: CURL_INCLUDE_DIR")
+	else()
+		set(CMAKE_INCLUDE_PATH ${CMAKE_INCLUDE_PATH} $ENV{CURL_INCLUDE_DIR})
+	endif()
+
+	if(NOT DEFINED ENV{CURL_LIB_DIR})
+	    message(FATAL_ERROR "not defined environment variable: CURL_LIB_DIR")
+	else()
+		set(CMAKE_LIBRARY_PATH ${CMAKE_LIBRARY_PATH} $ENV{CURL_LIB_DIR})
+	endif()
+
+	FIND_PACKAGE(CURL)
+	IF(NOT CURL_FOUND)
+		MESSAGE(FATAL_ERROR "CURL library not found")
+	ENDIF()
+
 else( WIN32 ) # Apple AND Linux
 
     if( APPLE )

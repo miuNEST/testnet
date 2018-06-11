@@ -31,6 +31,30 @@
 
 namespace graphene { namespace chain {
 
+void database::update_contract_data(contract_id_type contract, std::string &data, uint8_t state)
+{ try {
+    if( data.size() == 0 )
+        return ;
+
+   auto& index = get_index_type<contract_index>().indices().get<by_id>();
+   auto itr = index.find(contract);
+   if(itr == index.end())
+   {
+      FC_ASSERT( data.size() > 0, "Contract data: ${a}'s data empty: ${b}",
+                 ("a",(contract.instance))
+                 ("b",(data))
+                );
+   } else {
+      const auto &_contract = find(itr->get_id()); 
+      modify(*_contract, [&](contract_object& b) {
+          b.data.empty();
+          b.data = data;
+          b.state = state;
+      });
+   }
+} FC_CAPTURE_AND_RETHROW( (contract)(data)(state) ) }
+
+
 asset database::get_balance(account_id_type owner, asset_id_type asset_id) const
 {
    auto& index = get_index_type<account_balance_index>().indices().get<by_account_asset>();

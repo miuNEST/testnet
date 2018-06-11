@@ -96,8 +96,8 @@ add_library( graphene_chain
              "${CMAKE_CURRENT_BINARY_DIR}/include/graphene/chain/hardfork.hpp"
            )
 
-add_dependencies( graphene_chain build_hardfork_hpp )
-target_link_libraries( graphene_chain fc graphene_db )
+add_dependencies( graphene_chain build_hardfork_hpp graphene_wren)
+target_link_libraries( graphene_chain fc graphene_db graphene_wren)
 target_include_directories( graphene_chain
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include" "${CMAKE_CURRENT_BINARY_DIR}/include" )
 

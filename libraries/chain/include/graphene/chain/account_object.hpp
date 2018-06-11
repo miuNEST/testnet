@@ -25,6 +25,9 @@
 #include <graphene/chain/protocol/operations.hpp>
 #include <graphene/db/generic_index.hpp>
 #include <boost/multi_index/composite_key.hpp>
+#include <boost/multi_index_container.hpp>
+#include <boost/multi_index/member.hpp>
+#include <boost/multi_index/ordered_index.hpp>
 
 namespace graphene { namespace chain {
    class database;
@@ -367,6 +370,78 @@ namespace graphene { namespace chain {
     */
    typedef generic_index<account_object, account_multi_index_type> account_index;
 
+    class contract_object;
+
+   class contract_object_index : public graphene::db::abstract_object<contract_object_index>
+   {
+      public:
+         static const bool isIndex = true;
+         //using obj_type = contract_object;
+         account_id_type registrar;
+         uint64_t        contract_addr;
+         uint8_t         state;
+
+         contract_object_index  & operator=  (const contract_object_index & _index) {
+            if (&_index != this) {
+               id            = _index.id;
+               contract_addr = _index.contract_addr;
+               state         = _index.state;
+            }
+            return *this;
+         }
+
+         contract_id_type get_id()const { return id; }
+   };
+
+   class contract_object : public graphene::db::abstract_object<contract_object>
+   {
+      public:
+         static const uint8_t space_id = protocol_ids;
+         static const uint8_t type_id  = contract_object_type;
+
+         mutable contract_object_index obj_index;
+
+         //const contract_object_index &getObjIndex() const {
+         //   obj_index.contract_addr = this->contract_addr;
+         //   obj_index.state         = this->state;
+         //   obj_index.id            = this->id;
+
+         //   return obj_index;
+         //}
+
+         account_id_type registrar;
+         string          source;
+         uint64_t        contract_addr;
+         string          data;
+         uint8_t         state;
+
+         typedef account_options  options_type;
+         options_type options;
+
+         contract_id_type get_id()const { return id; }
+   };
+
+   struct by_contract_addr {};
+
+   typedef multi_index_container<
+      contract_object_index,
+      indexed_by<
+      ordered_unique< tag<by_id>, member< object, object_id_type, &object::id > >,
+      ordered_unique< tag<by_contract_addr>, member< contract_object_index, uint64_t, &contract_object_index::contract_addr >>
+      >
+   > contract_multi_index_type;
+   
+
+   typedef multi_index_container<
+      contract_object,
+      indexed_by<
+      ordered_unique< tag<by_id>, member< object, object_id_type, &object::id > >,
+      ordered_unique< tag<by_contract_addr>, member< contract_object, uint64_t, &contract_object::contract_addr >>
+      >
+   > org_contract_multi_index_type;
+
+   typedef generic_index<contract_object_index, contract_multi_index_type>     contract_index;
+   typedef generic_index<contract_object, org_contract_multi_index_type>       org_contract_index;
 }}
 
 FC_REFLECT_DERIVED( graphene::chain::account_object,
@@ -393,5 +468,20 @@ FC_REFLECT_DERIVED( graphene::chain::account_statistics_object,
                     (total_core_in_orders)
                     (lifetime_fees_paid)
                     (pending_fees)(pending_vested_fees)
+                  )
+FC_REFLECT_DERIVED( graphene::chain::contract_object,
+                   (graphene::db::object),
+                   (registrar)
+                   (contract_addr)
+                   (source)
+                   (data)
+                   (state)
+                  )
+
+FC_REFLECT_DERIVED( graphene::chain::contract_object_index,
+                   (graphene::db::object),
+                   (registrar)
+                   (contract_addr)
+                   (state)
                   )
 

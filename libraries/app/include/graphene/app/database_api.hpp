@@ -295,6 +295,9 @@ class database_api
        *
        * This function has semantics identical to @ref get_objects
        */
+      vector<optional<contract_object>> lookup_contract_addrs(const vector<uint64_t> &contract_addrs)const;
+
+      
       vector<optional<account_object>> lookup_account_names(const vector<string>& account_names)const;
 
       /**
@@ -720,7 +723,9 @@ FC_API(graphene::app::database_api,
    (lookup_account_names)
    (lookup_accounts)
    (get_account_count)
-
+   
+   // contract
+   (lookup_contract_addrs)
    // Balances
    (get_account_balances)
    (get_named_account_balances)

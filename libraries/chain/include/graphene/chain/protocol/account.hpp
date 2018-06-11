@@ -261,6 +261,82 @@ namespace graphene { namespace chain {
       void        validate()const;
    };
 
+   /* define smart contract upload operation structure. by Victor Sun */
+   struct smart_contract_upload_operation : public base_operation
+   {
+      
+      struct fee_parameters_type { uint64_t fee = 500 * GRAPHENE_BLOCKCHAIN_PRECISION; };
+      
+
+      asset           fee;
+      account_id_type uploader;
+      string            contract_addr_str;
+      smart_contract_type   smart_contract;
+      extensions_type       extensions;
+
+      account_id_type fee_payer()const { return uploader; }
+      void        validate()const;
+//      share_type      calculate_fee(const fee_parameters_type& k)const;
+   };
+
+
+   struct smart_contract_activate_operation : public base_operation
+   {
+      
+      struct fee_parameters_type { uint64_t fee = 500 * GRAPHENE_BLOCKCHAIN_PRECISION; };
+      
+
+      asset           fee;
+      account_id_type activator;
+//      account_id_type new_owner;
+      contract_id_type   smart_contract_id;
+      string             init_data;
+      extensions_type    extensions;
+
+      account_id_type fee_payer()const { return activator; }
+      void        validate()const;
+//      share_type      calculate_fee(const fee_parameters_type& k)const;
+   };
+
+
+
+
+   /* define smart contract run operation structure. by Victor Sun */
+   struct smart_contract_call_operation : public base_operation
+   {
+      
+      struct fee_parameters_type { uint64_t fee = 500 * GRAPHENE_BLOCKCHAIN_PRECISION; };
+      asset           fee;
+      account_id_type caller;//who call the contract
+//      account_id_type new_owner;
+      contract_id_type                          contract_id;//smart contract code in wren language
+      string                                    method_name_and_parameter;
+      smart_contract_input_parameter_type       input_parameters;
+      extensions_type                           extensions;
+
+      account_id_type fee_payer()const { return caller; }
+      void        validate()const;
+//      share_type      calculate_fee(const fee_parameters_type& k)const;
+   };
+
+   /*define data_digest_upload operation structure. by Victor Sun */
+   struct data_digest_upload_operation : public base_operation
+   {
+      
+      struct fee_parameters_type { uint64_t fee = 500 * GRAPHENE_BLOCKCHAIN_PRECISION; };
+      
+
+      asset                   fee;
+      account_id_type         uploader;
+//      account_id_type new_owner;
+      digest_type             data_digest;
+      extensions_type         extensions;
+
+      account_id_type fee_payer()const { return uploader; }
+      void        validate()const;
+//      share_type      calculate_fee(const fee_parameters_type& k)const;
+   };
+
 } } // graphene::chain
 
 FC_REFLECT(graphene::chain::account_options, (memo_key)(voting_account)(num_witness)(num_committee)(votes)(extensions))
@@ -291,3 +367,15 @@ FC_REFLECT( graphene::chain::account_upgrade_operation::fee_parameters_type, (me
 FC_REFLECT( graphene::chain::account_transfer_operation::fee_parameters_type, (fee) )
 
 FC_REFLECT( graphene::chain::account_transfer_operation, (fee)(account_id)(new_owner)(extensions) )
+
+FC_REFLECT( graphene::chain::smart_contract_upload_operation::fee_parameters_type, (fee) )
+FC_REFLECT( graphene::chain::smart_contract_upload_operation, (fee)(uploader)(contract_addr_str)(smart_contract)(extensions) )//by Victor Sun
+
+FC_REFLECT( graphene::chain::smart_contract_activate_operation::fee_parameters_type, (fee) )
+FC_REFLECT( graphene::chain::smart_contract_activate_operation, (fee)(activator)(smart_contract_id)(init_data)(extensions) )//by Victor Sun
+
+FC_REFLECT( graphene::chain::smart_contract_call_operation::fee_parameters_type, (fee) )
+FC_REFLECT( graphene::chain::smart_contract_call_operation, (fee)(caller)(contract_id)(method_name_and_parameter)(input_parameters)(extensions) )//by Victor Sun
+
+FC_REFLECT( graphene::chain::data_digest_upload_operation::fee_parameters_type, (fee) )//by Victor Sun
+FC_REFLECT( graphene::chain::data_digest_upload_operation, (fee)(uploader)(data_digest)(extensions) )//by Victor Sun

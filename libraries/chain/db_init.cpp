@@ -172,6 +172,10 @@ void database::initialize_evaluators()
    register_evaluator<transfer_from_blind_evaluator>();
    register_evaluator<blind_transfer_evaluator>();
    register_evaluator<asset_claim_fees_evaluator>();
+        register_evaluator<smart_contract_upload_evaluator>();//初始化db时，上传合约操作的估值器。只有注册了该操作的估值器，系统才会估算操作的费用。//by Victor Sun
+        register_evaluator<smart_contract_activate_evaluator>();//初始化db时，初始化合约操作的估值器。只有注册了该操作的估值器，系统才会估算操作的费用。//by Victor Sun
+        register_evaluator<smart_contract_call_evaluator>();//by Victor Sun
+        register_evaluator<data_digest_upload_evaluator>();//by Victor Sun
 }
 
 void database::initialize_indexes()
@@ -192,8 +196,11 @@ void database::initialize_indexes()
    add_index< primary_index<limit_order_index > >();
    add_index< primary_index<call_order_index > >();
 
-   auto prop_index = add_index< primary_index<proposal_index > >();
-   prop_index->add_secondary_index<required_approval_index>();
+        // contract index
+        auto cntr_index = add_index< primary_index<contract_index > >();
+    
+        auto prop_index = add_index< primary_index<proposal_index > >();
+        prop_index->add_secondary_index<required_approval_index>();
 
    add_index< primary_index<withdraw_permission_index > >();
    add_index< primary_index<vesting_balance_index> >();

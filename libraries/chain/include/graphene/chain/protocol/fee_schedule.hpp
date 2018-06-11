@@ -54,7 +54,7 @@ namespace graphene { namespace chain {
          FC_ASSERT( itr != parameters.end() );
          return itr->get<account_create_operation::fee_parameters_type>();
       }
-      typename account_create_operation::fee_parameters_type& get(flat_set<fee_parameters>& parameters)const
+      account_create_operation::fee_parameters_type& get(flat_set<fee_parameters>& parameters)const
       {
          auto itr = parameters.find( account_create_operation::fee_parameters_type() );
          FC_ASSERT( itr != parameters.end() );
