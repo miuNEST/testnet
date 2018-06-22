@@ -288,136 +288,117 @@ void_result smart_contract_upload_evaluator::do_evaluate( const smart_contract_u
    return void_result();
 } FC_CAPTURE_AND_RETHROW( (op) ) }
 
-object_id_type smart_contract_upload_evaluator::do_apply( const smart_contract_upload_operation& o )
-{ try {
-   database& d = db();
-   const auto& new_smart_contract_object = db().create<contract_object>( [&]( contract_object& obj ){
-         obj.registrar = o.uploader;
-         obj.source = o.smart_contract;
-      //   obj.contract_addr = HASH(.....)//自动生成并返回
-         obj.contract_addr = fc::hash64(o.contract_addr_str.c_str(), 64);
-         cout<<"obj.contract_addr = "<<obj.contract_addr<<endl;
-         obj.data = "";
-         obj.state = 0;//一个表示状态的枚举类型，0表示UNACTIVE状态
+object_id_type smart_contract_upload_evaluator::do_apply(const smart_contract_upload_operation &o)
+{
+    try {
+        database &d = db();
+        const auto & new_smart_contract_object = db().create<contract_object>(
+            [&](contract_object &obj) {
+                obj.registrar     = o.uploader;
+                obj.source        = o.smart_contract;            
+                obj.contract_addr = fc::hash64(o.contract_addr_str.c_str(), o.contract_addr_str.size());
+                obj.data          = "";
+                obj.state         = 0; //not activated
 
-   });
-/*   
-*/
-   return new_smart_contract_object.id;
-} FC_CAPTURE_AND_RETHROW((o)) }
+                ilog("smart contract addr is ${a}", ("a", obj.contract_addr));
+            }
+        );
 
+        return new_smart_contract_object.id;
+    } FC_CAPTURE_AND_RETHROW((o))
+}
 
+void_result smart_contract_activate_evaluator::do_evaluate(const smart_contract_activate_operation &op)
+{
+    try {
+        const database &d = db();
 
-//codes added by Victor Sun,增加do_evaluate()和do_apply()函数
-void_result smart_contract_activate_evaluator::do_evaluate( const smart_contract_activate_operation& op )
-{ try {
-   const database& d = db();
-   //下面可以对合约的状态进行判断，如果状态是非未激活状态，那么合约激活失败。
-   //并且要评估激活人是否有资格激活合约，现阶段检验激活人是否是合约对象的拥有者即可
-   FC_ASSERT( 0 == 0, "smart_contract_activate_evaluator::do_evaluate is called" );
-   std::cout<<"smart_contract_activate_evaluator::do_evaluate is called by std::cout"<<std::endl;
-   return void_result();
-} FC_CAPTURE_AND_RETHROW( (op) ) }
+        //下面可以对合约的状态进行判断，如果状态是非未激活状态，那么合约激活失败。
+        //并且要评估激活人是否有资格激活合约，现阶段检验激活人是否是合约对象的拥有者即可
+        FC_ASSERT( 0 == 0, "smart_contract_activate_evaluator::do_evaluate is called" );
+        //std::cout<<"smart_contract_activate_evaluator::do_evaluate is called by std::cout"<<std::endl;
 
-//string output run_wren_vm_when_activating_smart_contract(string input_source_code);//首次激活合约时调用的接口函数
-//string run_wren_vm_when_invoking_smart_contract(string input_source_code, string contranct_method, string input_data);//激活之后，合约每次被调用时，需要调用该函数
-void_result smart_contract_activate_evaluator::do_apply( const smart_contract_activate_operation& o )
-{ try {
-//   const database& d = db();
-   FC_ASSERT( 0 == 0, "smart_contract_activate_evaluator::do_apply() is called" );
-   //auto contract_obj = db().find_contract_addrs({o.smart_contract_id});
-   const auto &contract_obj = db().get<contract_object>(o.smart_contract_id);
-   string contract_source_code_class = contract_obj.source;
-   string init_data = o.init_data;
+        return void_result();
+    } FC_CAPTURE_AND_RETHROW((op))
+}
 
-   //下面可以对合约的状态进行判断，如果状态是非未激活状态，那么合约激活失败。
-   //并且要评估激活人是否有资格激活合约，现阶段检验激活人是否是合约对象的拥有者即可
-   FC_ASSERT( 0 == 0, "smart_contract_activate_evaluator::do_evaluate is called" );
-   std::cout<<"smart_contract_activate_evaluator::do_evaluate() is called by std::cout"<<std::endl;
+void_result smart_contract_activate_evaluator::do_apply(const smart_contract_activate_operation &o)
+{
+    try {
+        //   const database& d = db();
+        FC_ASSERT( 0 == 0, "smart_contract_activate_evaluator::do_apply() is called" );
+        //auto contract_obj = db().find_contract_addrs({o.smart_contract_id});
+        const auto &contract_obj = db().get<contract_object>(o.smart_contract_id);
+        string contract_source_code_class = contract_obj.source;
+        string init_data = o.init_data;
 
-   string output = run_wren_vm_when_activating_smart_contract(contract_source_code_class, init_data);//首次激活合约时调用的接口函数
+        //下面可以对合约的状态进行判断，如果状态是非未激活状态，那么合约激活失败。
+        //并且要评估激活人是否有资格激活合约，现阶段检验激活人是否是合约对象的拥有者即可
+        FC_ASSERT( 0 == 0, "smart_contract_activate_evaluator::do_evaluate is called" );
+        std::cout<<"smart_contract_activate_evaluator::do_evaluate() is called by std::cout"<<std::endl;
+
+        string output = run_wren_vm_when_activating_smart_contract(contract_source_code_class, init_data);//首次激活合约时调用的接口函数
    
-   std::cout<<"contract_source_code_class = "<<contract_source_code_class<<std::endl;
-   std::cout<<"init_data = "<<init_data<<std::endl;
-   std::cout<<"output ="<<output<<std::endl;
-   db().update_contract_data(o.smart_contract_id, output, 1/*表示现在是已激活状态*/);
-   return void_result();
-} FC_CAPTURE_AND_RETHROW((o)) }
+        std::cout<<"contract_source_code_class = "<<contract_source_code_class<<std::endl;
+        std::cout<<"init_data = "<<init_data<<std::endl;
+        std::cout<<"output ="<<output<<std::endl;
+        db().update_contract_data(o.smart_contract_id, output, 1/*表示现在是已激活状态*/);
+        return void_result();
+    } FC_CAPTURE_AND_RETHROW((o))
+}
 
+void_result smart_contract_call_evaluator::do_evaluate(const smart_contract_call_operation &op)
+{
+    try {
+        const database& d = db();
 
+        //将op中表示的合约的调用者caller时候有权限调用该合约。这步可以后期完善。
+        FC_ASSERT( 0 == 0, "smart_contract_call_evaluator::do_evaluate() is called" );
+        std::cout<<"smart_contract_call_evaluator::do_evaluate() is called by std::cout"<<std::endl;
+        return void_result();
+    } FC_CAPTURE_AND_RETHROW((op))
+}
 
-//codes added by Victor Sun,增加do_evaluate()和do_apply()函数
-void_result smart_contract_call_evaluator::do_evaluate( const smart_contract_call_operation& op )
-{ try {
-   const database& d = db();
-   //将op中表示的合约的调用者caller时候有权限调用该合约。这步可以后期完善。
-   FC_ASSERT( 0 == 0, "smart_contract_call_evaluator::do_evaluate() is called" );
-   std::cout<<"smart_contract_call_evaluator::do_evaluate() is called by std::cout"<<std::endl;
-   return void_result();
-} FC_CAPTURE_AND_RETHROW( (op) ) }
-
-void_result smart_contract_call_evaluator::do_apply( const smart_contract_call_operation& o )
-{ try {
-   //string src_code = db().get_source_code(contract_id_type)
-   //调用wren虚拟机执行合约
+void_result smart_contract_call_evaluator::do_apply(const smart_contract_call_operation &o)
+{
+    try {
+        //string src_code = db().get_source_code(contract_id_type)
+        //调用wren虚拟机执行合约
    
-   //db().update_contract_data(o.smart_contract_id, output, 1/*表示现在是已激活状态*/);
-   const auto &contract_obj = db().get<contract_object>(o.contract_id);
-   string contract_source_code_class = contract_obj.source;
-   string data_state = contract_obj.data;
-   cout<<data_state<<endl;
+        //db().update_contract_data(o.smart_contract_id, output, 1/*表示现在是已激活状态*/);
+        const auto &contract_obj = db().get<contract_object>(o.contract_id);
+        string contract_source_code_class = contract_obj.source;
+        string data_state = contract_obj.data;
+        cout<<data_state<<endl;
 
-   data_state = run_wren_vm_when_invoking_smart_contract(contract_source_code_class, o.method_name_and_parameter, data_state);
-   FC_ASSERT( 0 == 0, "smart_contract_run_evaluator::do_apply() is called" );
-   std::cout<<"data_state ="<<data_state<<std::endl;
-   std::cout<<"***************************************************************"<<std::endl;
-   db().update_contract_data(o.contract_id, data_state, 1/*表示现在是已激活状态*/);
-   std::cout<<"smart_contract_call_evaluator::do_evaluate() is called by std::cout"<<std::endl;
-   return void_result();
-} FC_CAPTURE_AND_RETHROW((o)) }
+        data_state = run_wren_vm_when_invoking_smart_contract(contract_source_code_class, o.method_name_and_parameter, data_state);
+        FC_ASSERT( 0 == 0, "smart_contract_run_evaluator::do_apply() is called" );
+        std::cout<<"data_state ="<<data_state<<std::endl;
+        std::cout<<"***************************************************************"<<std::endl;
+        db().update_contract_data(o.contract_id, data_state, 1/*表示现在是已激活状态*/);
+        std::cout<<"smart_contract_call_evaluator::do_evaluate() is called by std::cout"<<std::endl;
+        return void_result();
+    } FC_CAPTURE_AND_RETHROW((o))
+}
 
+void_result data_digest_upload_evaluator::do_evaluate(const data_digest_upload_operation &op)
+{
+    try {
+        const database& d = db();
+        FC_ASSERT( 0 == 0, "data_digest_upload_evaluator::do_evaluate() is called" );
+        std::cout<<"data_digest_upload_evaluator::do_evaluate() is called by std::cout"<<std::endl;
+        return void_result();
+    } FC_CAPTURE_AND_RETHROW((op))
+}
 
-
-
-
-
-//codes added by Victor Sun,增加do_evaluate()和do_apply()函数
-void_result data_digest_upload_evaluator::do_evaluate( const data_digest_upload_operation& op )
-{ try {
-   const database& d = db();
-   FC_ASSERT( 0 == 0, "data_digest_upload_evaluator::do_evaluate() is called" );
-   std::cout<<"data_digest_upload_evaluator::do_evaluate() is called by std::cout"<<std::endl;
-   return void_result();
-} FC_CAPTURE_AND_RETHROW( (op) ) }
-
-void_result data_digest_upload_evaluator::do_apply( const data_digest_upload_operation& o )
-{ try {
-   FC_ASSERT( 0 == 0, "data_digest_upload_evaluator::do_apply() is called" );
-   std::cout<<"data_digest_upload_evaluator::do_evaluate() is called by std::cout"<<std::endl;
-   return void_result();
-} FC_CAPTURE_AND_RETHROW((o)) }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+void_result data_digest_upload_evaluator::do_apply(const data_digest_upload_operation &o)
+{
+    try {
+        FC_ASSERT( 0 == 0, "data_digest_upload_evaluator::do_apply() is called" );
+        std::cout<<"data_digest_upload_evaluator::do_evaluate() is called by std::cout"<<std::endl;
+        return void_result();
+    } FC_CAPTURE_AND_RETHROW((o))
+}
 
 void_result account_update_evaluator::do_evaluate( const account_update_operation& o )
 { try {

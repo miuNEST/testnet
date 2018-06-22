@@ -767,45 +767,36 @@ vector<account_id_type> database_api_impl::get_account_references( account_id_ty
    return result;
 }
 
-vector<optional<contract_object>> database_api::lookup_contract_addrs(const vector<uint64_t> &contract_addrs)const
+vector<optional<contract_object>> database_api::lookup_contract_addrs(const vector<uint64_t> &contract_addrs) const
 {
-    return my->lookup_contract_addrs( contract_addrs );
+    return my->lookup_contract_addrs(contract_addrs);
 }
 
-vector<optional<contract_object>> database_api_impl::lookup_contract_addrs(const vector<uint64_t>& contract_addrs)const
+vector<optional<contract_object>> database_api_impl::lookup_contract_addrs(const vector<uint64_t> & contract_addrs) const
 {
-   const auto& contract_by_addr = _db.get_index_type<contract_index>().indices().get<by_contract_addr>();
+    const auto & contract_by_addr = _db.get_index_type<org_contract_index>().indices().get<by_contract_addr>();
 
+    vector<optional<contract_object>> result;
+    result.reserve(contract_addrs.size());
 
-   vector<optional<contract_object> > result;
-   result.reserve(contract_addrs.size());
-//     std::transform(account_names.begin(), account_names.end(), std::back_inserter(result),
-//                   [&accounts_by_name](const string& name) -> optional<account_object> {
-//       auto itr = accounts_by_name.find(name);
-//       return itr == accounts_by_name.end()? optional<account_object>() : *itr;
-//    });
+    std::transform(contract_addrs.begin(), contract_addrs.end(), std::back_inserter(result),
+        [&](const uint64_t & addr) -> optional<contract_object> {
+            auto itr = contract_by_addr.find(addr);
+            if (itr != contract_by_addr.end()) {
+                auto _p = _db.find(itr->get_id());
+                if (_p != nullptr)
+                    return *_p;
 
-
-   std::transform(contract_addrs.begin(), contract_addrs.end(), std::back_inserter(result),
-                  [&](const uint64_t& addr) -> optional<contract_object> {
-        auto itr = contract_by_addr.find(addr);
-
-
-        if(itr != contract_by_addr.end()){
-            auto _p = _db.find(itr->get_id());
-            if(_p != nullptr){
-                return *_p;
+                return optional<contract_object>();
             }
+
             return optional<contract_object>();
         }
-        if(itr == contract_by_addr.end()){
-            return optional<contract_object>();
-        }
+    );
 
-   });
-
-   return result;
+    return result;
 }
+
 vector<optional<account_object>> database_api::lookup_account_names(const vector<string>& account_names)const
 {
    return my->lookup_account_names( account_names );

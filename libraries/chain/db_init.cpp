@@ -196,11 +196,11 @@ void database::initialize_indexes()
    add_index< primary_index<limit_order_index > >();
    add_index< primary_index<call_order_index > >();
 
-        // contract index
-        auto cntr_index = add_index< primary_index<contract_index > >();
+   //smart contract index
+   add_index<primary_index<org_contract_index>>();
     
-        auto prop_index = add_index< primary_index<proposal_index > >();
-        prop_index->add_secondary_index<required_approval_index>();
+   auto prop_index = add_index< primary_index<proposal_index > >();
+   prop_index->add_secondary_index<required_approval_index>();
 
    add_index< primary_index<withdraw_permission_index > >();
    add_index< primary_index<vesting_balance_index> >();

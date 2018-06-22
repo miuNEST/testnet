@@ -602,12 +602,13 @@ public:
       FC_ASSERT(rec);
       return *rec;
    }
+
    contract_object get_contract(const string &contract_add) const
    {
       FC_ASSERT( contract_add.size() > 0 );
 
 
-      if( auto id = maybe_id<uint64_t>(contract_add) )
+      if (auto id = maybe_id<uint64_t>(contract_add))
       {
          // It's an ID
           return get_contract(*id);
@@ -1171,218 +1172,150 @@ public:
       return create_account_with_private_key(owner_privkey, account_name, registrar_account, referrer_account, broadcast, save_wallet);
    } FC_CAPTURE_AND_RETHROW( (account_name)(registrar_account)(referrer_account) ) }
 
+    signed_transaction upload_smart_contract(string uploader,
+                                             string smart_contract_code,
+                                             bool broadcast = false)
+    {
+        try {
+            FC_ASSERT(!self.is_locked());
 
+            //std::cout<<"starting doing upload_smart_contract is functional"<<std::endl;
 
-
-//upload_smart_contract, added by Victor Sun
-   signed_transaction upload_smart_contract(string uploader,
-                                            string smart_contract_code,
-                                            bool broadcast = false)
-   { try {
-      FC_ASSERT( !self.is_locked() );
-      std::cout<<"starting doing upload_smart_contract is functional"<<std::endl;
-      smart_contract_upload_operation upload_op;
+            smart_contract_upload_operation upload_op;
       
-      account_object uploader_account_object = get_account( uploader );
-      account_id_type uploader_account_id = uploader_account_object.id;
+            account_object uploader_account_object = get_account(uploader);
+            account_id_type uploader_account_id = uploader_account_object.id;
 
-      fc::time_point_sec now = _remote_db->get_dynamic_global_properties().time;
-      string contract_addr = fc::sha256::hash(uploader + smart_contract_code + now.to_iso_string());
+            //TODO: remove time from smart contract addr
 
-      upload_op.uploader = uploader_account_id;
-      upload_op.smart_contract = smart_contract_code;
-      upload_op.contract_addr_str = contract_addr;
+            //fc::time_point_sec now = _remote_db->get_dynamic_global_properties().time;
+            //string contract_addr = fc::sha256::hash(uploader + smart_contract_code + now.to_iso_string());
 
-      signed_transaction tx;
-      tx.operations.push_back( upload_op );
-      set_operation_fees( tx, _remote_db->get_global_properties().parameters.current_fees);
-      tx.validate();
-      std::cout<<"Finishing doing upload_smart_contract is functional"<<std::endl;
-      return sign_transaction( tx, broadcast );
+            string contract_addr = fc::sha256::hash(uploader + smart_contract_code);            
 
-   } FC_CAPTURE_AND_RETHROW( (uploader)(smart_contract_code)(broadcast) ) }
+            upload_op.uploader          = uploader_account_id;
+            upload_op.smart_contract    = smart_contract_code;
+            upload_op.contract_addr_str = contract_addr;
 
-
-//==================================================================
-
-   signed_transaction upload_smart_contract_from_file(string uploader,
-                                                      string smart_contract_code_path,
-                                                      bool broadcast = false)
-   { try {
-      FC_ASSERT( !self.is_locked() );
-//      std::cout<<"starting doing upload_smart_contract is functional"<<std::endl;
-      std::ifstream in(smart_contract_code_path);
-      std::ostringstream tmp;
-      tmp << in.rdbuf();
-      string src_code_data = tmp.str();
-
-      //=============================
-      return upload_smart_contract(uploader, src_code_data, broadcast );
-
-   } FC_CAPTURE_AND_RETHROW( (uploader)(smart_contract_code_path)(broadcast) ) }
+            signed_transaction tx;
+            tx.operations.push_back(upload_op);
+            set_operation_fees(tx, _remote_db->get_global_properties().parameters.current_fees);
+            tx.validate();
+            //std::cout<<"Finishing doing upload_smart_contract is functional"<<std::endl;
+            return sign_transaction(tx, broadcast);
+        } FC_CAPTURE_AND_RETHROW((uploader)(smart_contract_code)(broadcast))
+    }
 
 
+    signed_transaction upload_smart_contract_from_file(string uploader,
+                                                       string smart_contract_code_path,
+                                                       bool broadcast = false)
+    {
+        try {
+            FC_ASSERT( !self.is_locked());
 
+            //TODO: to ensure uploader is the owner of current connection .
 
-   //initialize_smart_contract, added by Victor Sun=======改到这里了=====将钱包里面的接口函数整理一下
-   signed_transaction activate_smart_contract(  string activator,
-                                                string smart_contract_addr,
-                                                string init_data,
-                                                bool broadcast = true)
-   { try {
-      FC_ASSERT( !self.is_locked() );
-      std::cout<<"starting doing activate_smart_contract is functional"<<std::endl;
-      smart_contract_activate_operation activate_op;
+            std::ifstream in(smart_contract_code_path);
+            std::ostringstream tmp;
+            tmp << in.rdbuf();
+            string src_code_data = tmp.str();
+            FC_ASSERT(!src_code_data.empty());
+
+            return upload_smart_contract(uploader, src_code_data, broadcast);
+        } FC_CAPTURE_AND_RETHROW((uploader)(smart_contract_code_path)(broadcast))
+    }
+
+    signed_transaction activate_smart_contract(string activator,
+                                               string smart_contract_addr,
+                                               string init_data,
+                                               bool broadcast = true)
+    {
+        try {
+            FC_ASSERT( !self.is_locked() );
+
+            //std::cout<<"starting doing activate_smart_contract is functional"<<std::endl;
+
+            smart_contract_activate_operation activate_op;
       
-      account_object activator_account_object = get_account( activator );
-      account_id_type activator_account_id = activator_account_object.id;
+            account_object activator_account_object = get_account(activator);
+            account_id_type activator_account_id = activator_account_object.id;
 
-      activate_op.activator = activator_account_id;
+            activate_op.activator = activator_account_id;
 
-      contract_object activated_contract_object = get_contract(smart_contract_addr);
-      contract_id_type activated_contract_id =  activated_contract_object.id;
+            contract_object activated_contract_object = get_contract(smart_contract_addr);
+            contract_id_type activated_contract_id =  activated_contract_object.id;
       
-      activate_op.smart_contract_id = activated_contract_id;
-      std::cout<<"init_data = "<<init_data<<std::endl;
-      activate_op.init_data = init_data;
+            activate_op.smart_contract_id = activated_contract_id;
+            //std::cout<<"init_data = "<<init_data<<std::endl;
+            activate_op.init_data = init_data;
 
-      signed_transaction tx;
-      tx.operations.push_back( activate_op );
-      set_operation_fees( tx, _remote_db->get_global_properties().parameters.current_fees);
-      tx.validate();
-      std::cout<<"Finishing doing activate_smart_contract is functional"<<std::endl;
-      return sign_transaction( tx, broadcast );
+            signed_transaction tx;
+            tx.operations.push_back( activate_op );
+            set_operation_fees( tx, _remote_db->get_global_properties().parameters.current_fees);
+            tx.validate();
+            //std::cout<<"Finishing doing activate_smart_contract is functional"<<std::endl;
+            return sign_transaction( tx, broadcast );
+        } FC_CAPTURE_AND_RETHROW((activator)(smart_contract_addr)(init_data)(broadcast))
+    }
 
-   } FC_CAPTURE_AND_RETHROW( (activator)(smart_contract_addr)(init_data)(broadcast) ) }
+    signed_transaction call_smart_contract(string caller,
+                                           string contract_adds,
+                                           string method_name_and_parameter,
+                                           bool broadcast = true)
+    {
+        try {
+            FC_ASSERT( !self.is_locked() );
 
+            //std::cout<<"Starting doing run_smart_contract!"<<std::endl;
 
-
-
-
-
-
-
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-//run smart contract, added by Victor Sun////////待续/////////////////////////
-   signed_transaction call_smart_contract(      string caller,
-                                                string contract_adds,
-                                                string method_name_and_parameter,
-                                                //string input_parameters,
-                                                //  int output_parameter = 0,
-                                                bool broadcast = true )
-   { try {
-      FC_ASSERT( !self.is_locked() );
-      std::cout<<"Starting doing run_smart_contract!"<<std::endl;
-      smart_contract_call_operation call_op;
+            smart_contract_call_operation call_op;
       
-      account_object caller_account_object = get_account( caller );
-      account_id_type caller_account_id = caller_account_object.id;
+            account_object caller_account_object = get_account( caller );
+            account_id_type caller_account_id = caller_account_object.id;
 
-      contract_object called_contract_object = get_contract(contract_adds);
-      contract_id_type called_contract_id = called_contract_object.id;
+            contract_object called_contract_object = get_contract(contract_adds);
+            contract_id_type called_contract_id = called_contract_object.id;
 
-      call_op.caller = caller_account_id;
-      call_op.contract_id = called_contract_id;
-      call_op.method_name_and_parameter = method_name_and_parameter;
-//      call_op.input_parameters = input_parameters;
-//      run_op.output_parameter = output_parameter;
+            call_op.caller                    = caller_account_id;
+            call_op.contract_id               = called_contract_id;
+            call_op.method_name_and_parameter = method_name_and_parameter;
+            //      call_op.input_parameters = input_parameters;
+            //      run_op.output_parameter = output_parameter;
 
-      signed_transaction tx;
-      tx.operations.push_back( call_op );
-      set_operation_fees( tx, _remote_db->get_global_properties().parameters.current_fees);
-      tx.validate();
-      return sign_transaction( tx, broadcast );
+            signed_transaction tx;
+            tx.operations.push_back(call_op);
+            set_operation_fees(tx, _remote_db->get_global_properties().parameters.current_fees);
+            tx.validate();
+            return sign_transaction(tx, broadcast);
+        } FC_CAPTURE_AND_RETHROW((caller)(contract_adds)(method_name_and_parameter)(broadcast))
+    }
 
-   } FC_CAPTURE_AND_RETHROW( (caller)(contract_adds)(method_name_and_parameter)(broadcast) ) }//FC_CAPTURE_AND_RETHROW( (caller)(smart_contract_code)(input_parameter)(output_parameter)(broadcast) ) }//by Victor Sun
-  
+    signed_transaction upload_data_digest(string uploader,
+                                          const string data,
+                                          bool broadcast = false)
+    {
+        try {
+            FC_ASSERT(!self.is_locked());
 
+            //std::cout<<"Starting uploading data digest"<<std::endl;
 
-/*
-   signed_transaction run_smart_contract_from_file(string caller,
-                                                   string wren_src_file_path,
-                                                   string class_name,
-                                                   string method_name,
-                                                   string input_parameters,//actually, parameters are saved in file
-                                                //  int output_parameter = 0,
-                                                   bool broadcast = false)
-   { try {
-      FC_ASSERT( !self.is_locked() );      
+            data_digest_upload_operation upload_op;
       
-      std::ifstream in(wren_src_file_path);
-      std::ostringstream tmp;
-      tmp << in.rdbuf();
-      string src_code_data = tmp.str();
-//      std::cout<<"src_code_data = \n"<<src_code_data<<std::endl;
+            account_object uploader_account_object = get_account( uploader );
+            account_id_type uploader_account_id = uploader_account_object.id;
 
-
-      std::ifstream in2(input_parameters);
-      std::ostringstream tmp2;
-      tmp2 << in2.rdbuf();
-      string input_parameters_str = tmp2.str();
-
-      return run_smart_contract(caller, src_code_data, class_name, method_name, input_parameters_str, broadcast);
-      
-      
-      
-      fc::path src_path(wren_src_file_path);
-      
-      
-      smart_contract_run_operation run_op;
-      
-      account_object caller_account_object = get_account( caller );
-      account_id_type caller_account_id = caller_account_object.id;
-
-      run_op.caller = caller_account_id;
-      run_op.smart_contract_code = smart_contract_code;
-      run_op.class_name = class_name;
-      run_op.method_name = method_name;
-      run_op.input_parameters = input_parameters;
-//      run_op.output_parameter = output_parameter;
-
-      signed_transaction tx;
-      tx.operations.push_back( run_op );
-//      set_operation_fees( tx, _remote_db->get_global_properties().parameters.current_fees);
-      tx.validate();
-      std::cout<<"Finishing doing run_smart_contract!"<<std::endl;
-      return sign_transaction( tx, broadcast );
-
-   } FC_CAPTURE_AND_RETHROW( (caller)(wren_src_file_path)(class_name)(method_name)(input_parameters)(broadcast) ) }//FC_CAPTURE_AND_RETHROW( (caller)(smart_contract_code)(input_parameter)(output_parameter)(broadcast) ) }//by Victor Sun
-
- */  
-   
-   
-   
-   
-   
-   
-   
-   
-   //By Victor Sun
-   signed_transaction upload_data_digest(string uploader,
-                                         const string data,
-                                         bool broadcast = false)
-   { try {
-      FC_ASSERT( !self.is_locked() );
-      std::cout<<"Starting uploading data digest"<<std::endl;
-      data_digest_upload_operation upload_op;
-      
-      account_object uploader_account_object = get_account( uploader );
-      account_id_type uploader_account_id = uploader_account_object.id;
-
-      upload_op.uploader = uploader_account_id;
-      upload_op.data_digest = fc::sha256::hash(data);
-//static sha256 hash( const string& );
-      signed_transaction tx;
-      tx.operations.push_back( upload_op );
-//      set_operation_fees( tx, _remote_db->get_global_properties().parameters.current_fees);
-      tx.validate();
-      std::cout<<"Finishing uploading data digest!"<<std::endl;
-      return sign_transaction( tx, broadcast );
-
-   } FC_CAPTURE_AND_RETHROW( (uploader)(data)(broadcast) ) }
-
-
+            upload_op.uploader = uploader_account_id;
+            upload_op.data_digest = fc::sha256::hash(data);
+            //static sha256 hash( const string& );
+            signed_transaction tx;
+            tx.operations.push_back( upload_op );
+            //      set_operation_fees( tx, _remote_db->get_global_properties().parameters.current_fees);
+            tx.validate();
+            //std::cout<<"Finishing uploading data digest!"<<std::endl;
+            return sign_transaction(tx, broadcast);
+        } FC_CAPTURE_AND_RETHROW((uploader)(data)(broadcast))
+    }
 
    signed_transaction create_asset(string issuer,
                                    string symbol,
