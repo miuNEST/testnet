@@ -36,46 +36,6 @@ public:
    object_id_type do_apply( const account_create_operation& o ) ;
 };
 
-//added by Victor Sun
-class smart_contract_upload_evaluator : public evaluator<smart_contract_upload_evaluator>
-{
-public:
-   typedef smart_contract_upload_operation operation_type;
-
-   void_result do_evaluate( const smart_contract_upload_operation& o );
-   object_id_type do_apply( const smart_contract_upload_operation& o );
-};
-
-//added by Victor Sun
-class smart_contract_activate_evaluator : public evaluator<smart_contract_activate_evaluator>
-{
-public:
-   typedef smart_contract_activate_operation operation_type;
-
-   void_result do_evaluate( const smart_contract_activate_operation& o );
-   void_result do_apply( const smart_contract_activate_operation& o ) ;
-};
-
-//added by Victor Sun
-class smart_contract_call_evaluator : public evaluator<smart_contract_call_evaluator>
-{
-public:
-   typedef smart_contract_call_operation operation_type;
-
-   void_result do_evaluate( const smart_contract_call_operation& o );
-   void_result do_apply( const smart_contract_call_operation& o ) ;
-};
-
-//added by Victor Sun
-class data_digest_upload_evaluator : public evaluator<data_digest_upload_evaluator>
-{
-public:
-   typedef data_digest_upload_operation operation_type;
-
-   void_result do_evaluate( const data_digest_upload_operation& o );
-   void_result do_apply( const data_digest_upload_operation& o ) ;
-};
-
 class account_update_evaluator : public evaluator<account_update_evaluator>
 {
 public:
@@ -107,6 +67,46 @@ public:
    void_result do_apply( const account_whitelist_operation& o);
 
    const account_object* listed_account;
+};
+
+//added by Victor Sun
+class smart_contract_upload_evaluator : public evaluator<smart_contract_upload_evaluator>
+{
+public:
+   typedef smart_contract_upload_operation operation_type;
+
+   void_result do_evaluate(const smart_contract_upload_operation& o);
+   object_id_type do_apply(const smart_contract_upload_operation& o);
+};
+
+//added by Victor Sun
+class smart_contract_activate_evaluator : public evaluator<smart_contract_activate_evaluator>
+{
+public:
+   typedef smart_contract_activate_operation operation_type;
+
+   void_result do_evaluate(const smart_contract_activate_operation& o);
+   void_result do_apply(const smart_contract_activate_operation& o);
+};
+
+//added by Victor Sun
+class smart_contract_call_evaluator : public evaluator<smart_contract_call_evaluator>
+{
+public:
+   typedef smart_contract_call_operation operation_type;
+
+   void_result do_evaluate(const smart_contract_call_operation& o);
+   void_result do_apply(const smart_contract_call_operation& o);
+};
+
+//added by Victor Sun
+class data_digest_upload_evaluator : public evaluator<data_digest_upload_evaluator>
+{
+public:
+   typedef data_digest_upload_operation operation_type;
+
+   void_result do_evaluate(const data_digest_upload_operation& o);
+   void_result do_apply(const data_digest_upload_operation& o);
 };
 
 } } // graphene::chain
