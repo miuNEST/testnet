@@ -1164,13 +1164,16 @@ public:
                                                     string referrer_account,
                                                     bool broadcast = false,
                                                     bool save_wallet = true)
-   { try {
-      FC_ASSERT( !self.is_locked() );
-      string normalized_brain_key = normalize_brain_key( brain_key );
-      // TODO:  scan blockchain for accounts that exist with same brain key
-      fc::ecc::private_key owner_privkey = derive_private_key( normalized_brain_key, 0 );
-      return create_account_with_private_key(owner_privkey, account_name, registrar_account, referrer_account, broadcast, save_wallet);
-   } FC_CAPTURE_AND_RETHROW( (account_name)(registrar_account)(referrer_account) ) }
+   {
+      try
+      {
+         FC_ASSERT( !self.is_locked() );
+         string normalized_brain_key = normalize_brain_key( brain_key );
+         // TODO:  scan blockchain for accounts that exist with same brain key
+         fc::ecc::private_key owner_privkey = derive_private_key( normalized_brain_key, 0 );
+         return create_account_with_private_key(owner_privkey, account_name, registrar_account, referrer_account, broadcast, save_wallet);
+      } FC_CAPTURE_AND_RETHROW( (account_name)(registrar_account)(referrer_account) )
+   }
 
     signed_transaction upload_smart_contract(string uploader,
                                              string smart_contract_code,

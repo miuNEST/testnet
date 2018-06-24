@@ -40,23 +40,26 @@ FC_REFLECT( graphene::chain::index_entry, (block_pos)(block_size)(block_id) );
 namespace graphene { namespace chain {
 
 void block_database::open( const fc::path& dbdir )
-{ try {
-   fc::create_directories(dbdir);
-   _block_num_to_pos.exceptions(std::ios_base::failbit | std::ios_base::badbit);
-   _blocks.exceptions(std::ios_base::failbit | std::ios_base::badbit);
+{
+   try
+   {
+      fc::create_directories(dbdir);
+      _block_num_to_pos.exceptions(std::ios_base::failbit | std::ios_base::badbit);
+      _blocks.exceptions(std::ios_base::failbit | std::ios_base::badbit);
 
-   _index_filename = dbdir / "index";
-   if( !fc::exists( _index_filename ) )
-   {
-     _block_num_to_pos.open( _index_filename.generic_string().c_str(), std::fstream::binary | std::fstream::in | std::fstream::out | std::fstream::trunc);
-     _blocks.open( (dbdir/"blocks").generic_string().c_str(), std::fstream::binary | std::fstream::in | std::fstream::out | std::fstream::trunc);
-   }
-   else
-   {
-     _block_num_to_pos.open( _index_filename.generic_string().c_str(), std::fstream::binary | std::fstream::in | std::fstream::out );
-     _blocks.open( (dbdir/"blocks").generic_string().c_str(), std::fstream::binary | std::fstream::in | std::fstream::out );
-   }
-} FC_CAPTURE_AND_RETHROW( (dbdir) ) }
+      _index_filename = dbdir / "index";
+      if( !fc::exists( _index_filename ) )
+      {
+        _block_num_to_pos.open( _index_filename.generic_string().c_str(), std::fstream::binary | std::fstream::in | std::fstream::out | std::fstream::trunc);
+        _blocks.open( (dbdir/"blocks").generic_string().c_str(), std::fstream::binary | std::fstream::in | std::fstream::out | std::fstream::trunc);
+      }
+      else
+      {
+        _block_num_to_pos.open( _index_filename.generic_string().c_str(), std::fstream::binary | std::fstream::in | std::fstream::out );
+        _blocks.open( (dbdir/"blocks").generic_string().c_str(), std::fstream::binary | std::fstream::in | std::fstream::out );
+      }
+   } FC_CAPTURE_AND_RETHROW( (dbdir) )
+}
 
 bool block_database::is_open()const
 {
@@ -95,23 +98,26 @@ void block_database::store( const block_id_type& _id, const signed_block& b )
 }
 
 void block_database::remove( const block_id_type& id )
-{ try {
-   index_entry e;
-   int64_t index_pos = sizeof(e) * int64_t(block_header::num_from_id(id));
-   _block_num_to_pos.seekg( 0, _block_num_to_pos.end );
-   if ( _block_num_to_pos.tellg() <= index_pos )
-      FC_THROW_EXCEPTION(fc::key_not_found_exception, "Block ${id} not contained in block database", ("id", id));
-
-   _block_num_to_pos.seekg( index_pos );
-   _block_num_to_pos.read( (char*)&e, sizeof(e) );
-
-   if( e.block_id == id )
+{
+   try
    {
-      e.block_size = 0;
-      _block_num_to_pos.seekp( sizeof(e) * int64_t(block_header::num_from_id(id)) );
-      _block_num_to_pos.write( (char*)&e, sizeof(e) );
-   }
-} FC_CAPTURE_AND_RETHROW( (id) ) }
+      index_entry e;
+      int64_t index_pos = sizeof(e) * int64_t(block_header::num_from_id(id));
+      _block_num_to_pos.seekg( 0, _block_num_to_pos.end );
+      if ( _block_num_to_pos.tellg() <= index_pos )
+         FC_THROW_EXCEPTION(fc::key_not_found_exception, "Block ${id} not contained in block database", ("id", id));
+
+      _block_num_to_pos.seekg( index_pos );
+      _block_num_to_pos.read( (char*)&e, sizeof(e) );
+
+      if( e.block_id == id )
+      {
+         e.block_size = 0;
+         _block_num_to_pos.seekp( sizeof(e) * int64_t(block_header::num_from_id(id)) );
+         _block_num_to_pos.write( (char*)&e, sizeof(e) );
+      }
+   } FC_CAPTURE_AND_RETHROW( (id) )
+}
 
 bool block_database::contains( const block_id_type& id )const
 {

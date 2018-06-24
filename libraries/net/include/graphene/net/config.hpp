@@ -31,7 +31,7 @@
  * used for automated testing (creating artificial net splits,
  * tracking where messages came from and when)
  */
-#define ENABLE_P2P_DEBUGGING_API                             1
+#define ENABLE_P2P_DEBUGGING_API                             1 // should DISABLE when release
 
 /**
  * 2MiB
@@ -40,7 +40,7 @@
 #define GRAPHENE_NET_DEFAULT_PEER_CONNECTION_RETRY_TIME      30 // seconds
 
 /**
- * AFter trying all peers, how long to wait before we check to
+ * After trying all peers, how long to wait before we check to
  * see if there are peers we can try again.
  */
 #define GRAPHENE_PEER_DATABASE_RETRY_DELAY                   15 // seconds

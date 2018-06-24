@@ -73,7 +73,7 @@ namespace graphene { namespace chain {
     *  All assets have a globally unique symbol name that controls how they are traded and an issuer who
     *  has authority over the parameters of the asset.
     */
-   class asset_object : public graphene::db::abstract_object<asset_object>
+   class asset_object : public abstract_object<asset_object>
    {
       public:
          static const uint8_t space_id = protocol_ids;
