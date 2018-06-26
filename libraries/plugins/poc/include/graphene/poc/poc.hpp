@@ -47,7 +47,10 @@ public:
    virtual void plugin_shutdown() override;
 
 private:
+   void schedule_poc_loop();
+   void _schedule_poc_loop();
    fc::future<void> _contribution_collection_task;
+   uint32_t _collection_period;
 };
 
 } } //graphene::poc_plugin

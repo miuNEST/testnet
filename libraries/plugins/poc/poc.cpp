@@ -43,6 +43,10 @@ void poc_plugin::plugin_set_program_options(
    boost::program_options::options_description& command_line_options,
    boost::program_options::options_description& config_file_options)
 {
+   command_line_options.add_options()
+         ("poc-period", boost::program_options::value<uint32_t>()->default_value(24), "Node Contribution Collection Period")
+         ;
+   config_file_options.add(command_line_options);
    return;
 }
 
@@ -54,12 +58,17 @@ std::string poc_plugin::plugin_name()const
 void poc_plugin::plugin_initialize(const boost::program_options::variables_map& options)
 { try {
    ilog("poc plugin:  plugin_initialize() begin");
+   if (options.count("poc-period")) {
+       _collection_period = options["poc-period"].as<uint32_t>();
+       ilog("###  period is ${p}", ("p", _collection_period));
+   }
    ilog("poc plugin:  plugin_initialize() end");
 } FC_LOG_AND_RETHROW() }
 
 void poc_plugin::plugin_startup()
 { try {
    ilog("poc plugin:  plugin_startup() begin");
+   schedule_poc_loop();
    ilog("poc plugin:  plugin_startup() end");
 } FC_CAPTURE_AND_RETHROW() }
 
@@ -68,3 +77,18 @@ void poc_plugin::plugin_shutdown()
    // nothing to do
 }
 
+void poc_plugin::schedule_poc_loop()
+{
+   fc::time_point now = fc::time_point::now();
+
+   fc::time_point next_wakeup( now + fc::seconds( _collection_period ) );
+
+   _contribution_collection_task = fc::schedule([this]{ _schedule_poc_loop(); },
+                                   next_wakeup, "Collect Node Contribution");
+}
+
+void poc_plugin::_schedule_poc_loop()
+{
+   ilog("_schedule_poc_loop()");
+   schedule_poc_loop();
+}
