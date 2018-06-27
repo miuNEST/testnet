@@ -89,6 +89,32 @@ void poc_plugin::schedule_poc_loop()
 
 void poc_plugin::_schedule_poc_loop()
 {
+   uint32_t contributions;
    ilog("_schedule_poc_loop()");
+
+   // retrieve contributions
+   contributions = disk_contribution();
+   contributions += uptime_contribution();
+   contributions += l2_contribution();
+
+   // report contribution
+   // send_to(smart_contract, contributions);
+
    schedule_poc_loop();
+}
+
+uint32_t poc_plugin::disk_contribution()
+{
+   // Fix me
+   return 1;
+}
+
+uint32_t poc_plugin::uptime_contribution()
+{
+   return _collection_period;
+}
+
+uint32_t poc_plugin::l2_contribution()
+{
+   return 1;
 }

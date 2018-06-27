@@ -49,6 +49,11 @@ public:
 private:
    void schedule_poc_loop();
    void _schedule_poc_loop();
+
+   uint32_t disk_contribution();
+   uint32_t uptime_contribution();
+   uint32_t l2_contribution();
+
    fc::future<void> _contribution_collection_task;
    uint32_t _collection_period;
 };
