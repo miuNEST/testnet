@@ -138,6 +138,21 @@ namespace graphene { namespace chain {
 
    typedef generic_index<account_transaction_history_object, account_transaction_history_multi_index_type> account_transaction_history_index;
 
+   typedef struct atho_by_seq {
+	   account_id_type				account;   
+	   uint32_t						sequence;  
+   } atho_by_seq;
+
+   typedef struct atho_by_op {
+	   account_id_type				account;
+	   operation_history_id_type	operation_id; 
+   } atho_by_op;
+
+   typedef struct atho_by_opid { 
+	   operation_history_id_type	operation_id;
+   } atho_by_opid;
+
+
 
 } } // graphene::chain
 

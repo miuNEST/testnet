@@ -84,11 +84,21 @@ namespace graphene { namespace db {
           */
          virtual const object& insert( object&& obj ) = 0;
 
+		 /**
+		  * Sometimes we insert an object into a 3rd-party database,
+		  *  and we don't have an object returned for reference.
+		 */
+		 virtual bool insert_db(object&& obj) { return false; }
+
          /**
           * Builds a new object and assigns it the next available ID and then
           * initializes it with constructor and lastly inserts it into the index.
           */
          virtual const object&  create( const std::function<void(object&)>& constructor ) = 0;
+		 /**
+		 * Sometimes we create an object and insert it into a 3rd-party database
+		 */
+		 virtual std::unique_ptr<object> create_db(const std::function<void(object&)>& constructor) { return unique_ptr<object>(nullptr);  }
 
          /**
           *  Opens the index loading objects from a file
@@ -101,6 +111,9 @@ namespace graphene { namespace db {
          /** @return the object with id or nullptr if not found */
          virtual const object*      find( object_id_type id )const = 0;
 
+		 // find the object from a 3rd-party db
+		 virtual std::unique_ptr<object> find_db(object_id_type id) { return std::unique_ptr<object>(nullptr); }
+
          /**
           * This version will automatically check for nullptr and throw an exception if the
           * object ID could not be found.
@@ -108,12 +121,13 @@ namespace graphene { namespace db {
          const object&              get( object_id_type id )const
          {
             auto maybe_found = find( id );
-            FC_ASSERT( maybe_found != nullptr, "Unable to find Object", ("id",id) );
+            FC_ASSERT( maybe_found != nullptr, "Unable to find Object ${id}", ("id",id) );
             return *maybe_found;
          }
 
          virtual void               modify( const object& obj, const std::function<void(object&)>& ) = 0;
          virtual void               remove( const object& obj ) = 0;
+		 virtual void               remove_db( object_id_type id) { }
 
          /**
           *   When forming your lambda to modify obj, it is natural to have Object& be the signature, but
@@ -198,7 +212,7 @@ namespace graphene { namespace db {
     *
     *  @see http://en.wikipedia.org/wiki/Curiously_recurring_template_pattern
     */
-   template<typename DerivedIndex>
+   template<typename DerivedIndex, typename use3rdPartyDB = fc::false_type>
    class primary_index  : public DerivedIndex, public base_primary_index
    {
       public:

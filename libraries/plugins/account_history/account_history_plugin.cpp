@@ -36,6 +36,8 @@
 
 #include <fc/smart_ref_impl.hpp>
 #include <fc/thread/thread.hpp>
+#include <graphene/db/bdb_index.hpp>
+#include <boost/filesystem.hpp>
 
 namespace graphene { namespace account_history {
 
@@ -64,8 +66,9 @@ class account_history_plugin_impl
 
       account_history_plugin& _self;
       flat_set<account_id_type> _tracked_accounts;
-      bool _partial_operations = false;
-      primary_index< operation_history_index >* _oho_index;
+      bool _partial_operations = false; 
+	  primary_index<bdb_index<operation_history_object>>* _oho_index;
+	  primary_index<bdb_index<account_transaction_history_object>>* _atho_index;
       uint32_t _max_ops_per_account = -1;
    private:
       /** add one history record, then check and remove the earliest history record */
@@ -86,31 +89,35 @@ void account_history_plugin_impl::update_account_histories( const signed_block& 
    auto skip_oho_id = [&is_first,&db,this]() {
       if( is_first && db._undo_db.enabled() ) // this ensures that the current id is rolled back on undo
       {
-         db.remove( db.create<operation_history_object>( []( operation_history_object& obj) {} ) );
+		 _oho_index->remove( *_oho_index->create_db( []( object& obj) {} ) );
          is_first = false;
       }
       else
-         _oho_index->use_next_id();
+		  _oho_index->use_next_id();
    };
 
    for( const optional< operation_history_object >& o_op : hist )
    {
       optional<operation_history_object> oho;
 
+	  operation_history_object ho;
       auto create_oho = [&]() {
          is_first = false;
-         return optional<operation_history_object>( db.create<operation_history_object>( [&]( operation_history_object& h )
-         {
-            if( o_op.valid() )
-            {
-               h.op           = o_op->op;
-               h.result       = o_op->result;
-               h.block_num    = o_op->block_num;
-               h.trx_in_block = o_op->trx_in_block;
-               h.op_in_trx    = o_op->op_in_trx;
-               h.virtual_op   = o_op->virtual_op;
-            }
-         } ) );
+
+		 std::unique_ptr<object> tmp = _oho_index->create_db([&](object& o)
+		 {
+			 if (o_op.valid())
+			 {
+				 operation_history_object& h = dynamic_cast<operation_history_object&>(o);
+				 h.op = o_op->op;
+				 h.result = o_op->result;
+				 h.block_num = o_op->block_num;
+				 h.trx_in_block = o_op->trx_in_block;
+				 h.op_in_trx = o_op->op_in_trx;
+				 h.virtual_op = o_op->virtual_op;
+			 }
+		 }); 
+         return optional<operation_history_object>(dynamic_cast<operation_history_object&>(*tmp));
       };
 
       if( !o_op.valid() || ( _max_ops_per_account == 0 && _partial_operations ) )
@@ -198,24 +205,30 @@ void account_history_plugin_impl::add_account_history( const account_id_type acc
 {
    graphene::chain::database& db = database();
    const auto& stats_obj = account_id(db).statistics(db);
+
    // add new entry
-   const auto& ath = db.create<account_transaction_history_object>( [&]( account_transaction_history_object& obj ){
+   auto ath_ptr = _atho_index->create_db( [&]( object& o ){
+
+	   account_transaction_history_object& obj = static_cast<account_transaction_history_object&>(o);
        obj.operation_id = op_id;
        obj.account = account_id;
        obj.sequence = stats_obj.total_ops + 1;
        obj.next = stats_obj.most_recent_op;
    });
+   const auto& ath = static_cast<account_transaction_history_object&>(*ath_ptr);
    db.modify( stats_obj, [&]( account_statistics_object& obj ){
        obj.most_recent_op = ath.id;
        obj.total_ops = ath.sequence;
    });
+
+   /*
    // remove the earliest account history entry if too many
    // _max_ops_per_account is guaranteed to be non-zero outside
    if( stats_obj.total_ops - stats_obj.removed_ops > _max_ops_per_account )
    {
       // look for the earliest entry
-      const auto& his_idx = db.get_index_type<account_transaction_history_index>();
-      const auto& by_seq_idx = his_idx.indices().get<by_seq>();
+      const auto& his_idx = _atho_index;
+      const auto& by_seq_idx = his_idx->find_db_secondary()// .indices().get<by_seq>();
       auto itr = by_seq_idx.lower_bound( boost::make_tuple( account_id, 0 ) );
       // make sure don't remove the one just added
       if( itr != by_seq_idx.end() && itr->account == account_id && itr->id != ath.id )
@@ -246,11 +259,11 @@ void account_history_plugin_impl::add_account_history( const account_id_type acc
             if( by_opid_idx.find( remove_op_id ) == by_opid_idx.end() )
             {
                // if no reference, remove
-               db.remove( remove_op_id(db) );
+				_oho_index->remove_db(remove_op_id);
             }
          }
       }
-   }
+   }*/
 }
 
 } // end namespace detail
@@ -287,19 +300,91 @@ void account_history_plugin::plugin_set_program_options(
    cfg.add(cli);
 }
 
+int get_account_seq(Db* sdb, const Dbt* pkey, const Dbt* pdata, Dbt* skey)
+{
+	const char* ck = (const char*)pkey->get_data();
+	if (*ck == '_')
+		return DB_DONOTINDEX;
+
+	account_transaction_history_object obj ;
+	fc::raw::unpack<account_transaction_history_object>((const char*)pdata->get_data(), pdata->get_size(), obj);
+	auto* atho = &obj;
+
+	// account_transaction_history_object* atho = (account_transaction_history_object*)pdata->get_data();
+
+	atho_by_seq* k = (atho_by_seq*) malloc(sizeof(atho_by_seq));
+	k->account = atho->account;
+	k->sequence = atho->sequence;
+
+	skey->set_flags(DB_DBT_APPMALLOC); // let bdb to free it
+	skey->set_data( k );
+	skey->set_size(sizeof(atho_by_seq));
+	return (0);
+}
+
+int get_account_op(Db* sdb, const Dbt* pkey, const Dbt* pdata, Dbt* skey)
+{
+	const char* ck = (const char*)pkey->get_data();
+	if (*ck == '_')
+		return DB_DONOTINDEX;
+
+	account_transaction_history_object obj;
+	fc::raw::unpack<account_transaction_history_object>((const char*)pdata->get_data(), pdata->get_size(), obj);
+	auto* atho = &obj;
+
+	// account_transaction_history_object* atho = (account_transaction_history_object*)pdata->get_data();
+
+	atho_by_op* k = (atho_by_op*)malloc(sizeof(atho_by_op));
+	k->account = atho->account;
+	k->operation_id = atho->operation_id;
+
+	skey->set_flags(DB_DBT_APPMALLOC); // let bdb to free it
+	skey->set_data(k);
+	skey->set_size(sizeof(atho_by_op));
+	return (0);
+}
+
+int get_account_opid(Db* sdb, const Dbt* pkey, const Dbt* pdata, Dbt* skey)
+{
+	const char* k = (const char*)pkey->get_data();
+	if (*k == '_')
+		return DB_DONOTINDEX;
+
+	account_transaction_history_object obj;
+	fc::raw::unpack<account_transaction_history_object>((const char*)pdata->get_data(), pdata->get_size(), obj);
+	auto* atho = &obj;
+
+	// account_transaction_history_object* atho = (account_transaction_history_object*)pdata->get_data();
+	
+	skey->set_data(&atho->operation_id);
+	skey->set_size(sizeof(atho->operation_id));
+	return (0);
+}
+
+
 void account_history_plugin::plugin_initialize(const boost::program_options::variables_map& options)
 {
-   database().applied_block.connect( [&]( const signed_block& b){ my->update_account_histories(b); } );
-   my->_oho_index = database().add_index< primary_index< operation_history_index > >();
-   database().add_index< primary_index< account_transaction_history_index > >();
+	fc::path _data_dir = options["data-dir"].as<boost::filesystem::path>();
+	fc::path bdb_home = _data_dir / "blockchain" / "bdb_home";
+	fc::create_directories(bdb_home / "data_dir");
 
-   LOAD_VALUE_SET(options, "track-account", my->_tracked_accounts, graphene::chain::account_id_type);
-   if (options.count("partial-operations")) {
-       my->_partial_operations = options["partial-operations"].as<bool>();
-   }
-   if (options.count("max-ops-per-account")) {
-       my->_max_ops_per_account = options["max-ops-per-account"].as<uint32_t>();
-   }
+	graphene::db::bdb_env::getInstance().init(bdb_home.generic_string().c_str(), "data_dir");
+
+	database().applied_block.connect( [&]( const signed_block& b){ my->update_account_histories(b); } );
+	my->_oho_index = database().add_index< primary_index< bdb_index<operation_history_object> > >();
+	my->_atho_index = database().add_index< primary_index< bdb_index<account_transaction_history_object > > >();
+
+	my->_atho_index->add_bdb_secondary_index(new bdb_secondary_index<account_transaction_history_object>("by_seq", false), get_account_seq);
+	my->_atho_index->add_bdb_secondary_index(new bdb_secondary_index<account_transaction_history_object>("by_op", false), get_account_op);
+	my->_atho_index->add_bdb_secondary_index(new bdb_secondary_index<account_transaction_history_object>("by_opid", true), get_account_opid);
+
+	LOAD_VALUE_SET(options, "track-account", my->_tracked_accounts, graphene::chain::account_id_type);
+	if (options.count("partial-operations")) {
+		my->_partial_operations = options["partial-operations"].as<bool>();
+	}
+	if (options.count("max-ops-per-account")) {
+		my->_max_ops_per_account = options["max-ops-per-account"].as<uint32_t>();
+	}
 }
 
 void account_history_plugin::plugin_startup()
