@@ -97,6 +97,10 @@ public:
 
    void_result do_evaluate(const smart_contract_call_operation& o);
    void_result do_apply(const smart_contract_call_operation& o);
+private:
+    string invoke_smart_contract(string input_source_code,
+        string contranct_method_and_parameter,
+        string starting_state);
 };
 
 //added by Victor Sun

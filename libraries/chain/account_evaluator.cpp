@@ -371,7 +371,7 @@ void_result smart_contract_call_evaluator::do_apply(const smart_contract_call_op
         string data_state = contract_obj.data;
         cout<<data_state<<endl;
 
-        data_state = run_wren_vm_when_invoking_smart_contract(contract_source_code_class, o.method_name_and_parameter, data_state);
+        data_state = invoke_smart_contract(contract_source_code_class, o.method_name_and_parameter, data_state);
         FC_ASSERT( 0 == 0, "smart_contract_run_evaluator::do_apply() is called" );
         std::cout<<"data_state ="<<data_state<<std::endl;
         std::cout<<"***************************************************************"<<std::endl;
