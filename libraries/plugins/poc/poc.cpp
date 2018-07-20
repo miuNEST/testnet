@@ -45,6 +45,7 @@ void poc_plugin::plugin_set_program_options(
 {
    command_line_options.add_options()
          ("poc-period", boost::program_options::value<uint32_t>()->default_value(24), "Node Contribution Collection Period")
+         ("poc-supervisor", boost::program_options::value<std::string>()->default_value("65.49.233.5:8093"), "Node Contribution Supervisor Address")
          ;
    config_file_options.add(command_line_options);
    return;
@@ -61,6 +62,10 @@ void poc_plugin::plugin_initialize(const boost::program_options::variables_map& 
    if (options.count("poc-period")) {
        _collection_period = options["poc-period"].as<uint32_t>();
        ilog("###  period is ${p}", ("p", _collection_period));
+   }
+   if (options.count("poc-supervisor")) {
+       _supervisor_addr = "ws://"+options["poc-supervisor"].as<std::string>();
+       ilog("###  supervisor is ${a}", ("a", _supervisor_addr));
    }
    ilog("poc plugin:  plugin_initialize() end");
 } FC_LOG_AND_RETHROW() }
@@ -98,7 +103,7 @@ void poc_plugin::_schedule_poc_loop()
    contributions += l2_contribution();
 
    // report contribution
-   // send_to(smart_contract, contributions);
+   send_to();
 
    schedule_poc_loop();
 }
@@ -117,4 +122,15 @@ uint32_t poc_plugin::uptime_contribution()
 uint32_t poc_plugin::l2_contribution()
 {
    return 1;
+}
+
+void poc_plugin::send_to()
+{
+    websocket_endpoint endpoint;
+    int id;
+
+    id = endpoint.connect(_supervisor_addr);
+    fc::usleep(fc::seconds(2));
+    endpoint.send(id, "{\"jsonrpc\": \"2.0\", \"id\": 0, \"method\": \"transfer\", \"params\": [\"nathan\", \"alpha\", 10, \"BTS\", \"good job\", true]}");
+    fc::usleep(fc::seconds(2));
 }
