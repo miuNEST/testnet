@@ -206,8 +206,8 @@ public:
 	// do not use this function for this class, use find_db instead.
 	virtual const object* find(object_id_type id)const override
 	{
-		assert(id.space() == T::space_id);
-		assert(id.type() == T::type_id);
+		assert(id.space() == object_type::space_id);
+		assert(id.type() == object_type::type_id);
 		
 		return nullptr;
 	}
