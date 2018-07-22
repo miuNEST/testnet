@@ -1,10 +1,14 @@
 file(GLOB HEADERS "include/graphene/account_history/*.hpp")
 
+if(WIN32)
+	INCLUDE_DIRECTORIES($ENV{BDB_INCLUDE_DIR})
+endif(WIN32)
+
 add_library( graphene_account_history 
              account_history_plugin.cpp
            )
 
-target_link_libraries( graphene_account_history graphene_chain graphene_app db_cxx )
+target_link_libraries( graphene_account_history graphene_chain graphene_app )
 target_include_directories( graphene_account_history
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include" )
 
