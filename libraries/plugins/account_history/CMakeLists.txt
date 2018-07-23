@@ -8,7 +8,13 @@ add_library( graphene_account_history
              account_history_plugin.cpp
            )
 
-target_link_libraries( graphene_account_history graphene_chain graphene_app )
+
+if(WIN32)
+	target_link_libraries( graphene_account_history graphene_chain graphene_app )
+else(WIN32)
+	target_link_libraries( graphene_account_history graphene_chain graphene_app db_cxx)
+endif(WIN32)
+
 target_include_directories( graphene_account_history
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include" )
 
