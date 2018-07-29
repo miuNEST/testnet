@@ -271,36 +271,39 @@ object_id_type account_create_evaluator::do_apply( const account_create_operatio
    return new_acnt_object.id;
 } FC_CAPTURE_AND_RETHROW((o)) }
 
-
-
-//do_evaluate函数数对操作对象进行评估，以确定该操作是否合法
-void_result smart_contract_upload_evaluator::do_evaluate( const smart_contract_upload_operation& op )//对合约的上传的逻辑可行性进行判断
-{ try {
-   database& d = db();
-//   FC_ASSERT( d.find_object(op.options.voting_account), "Invalid proxy account specified." );
-//   FC_ASSERT( fee_paying_account->is_lifetime_member(), "Only Lifetime members may register an account." );
-//   FC_ASSERT( op.referrer(d).is_member(d.head_block_time()), "The referrer must be either a lifetime or annual subscriber." );
-
-//一下是判断是否具有权限====================================
-/*经过一系列的逻辑判断来确定
-
-*/
-   return void_result();
-} FC_CAPTURE_AND_RETHROW( (op) ) }
-
-object_id_type smart_contract_upload_evaluator::do_apply(const smart_contract_upload_operation &o)
+void_result smart_contract_deploy_evaluator::do_evaluate(const smart_contract_deploy_operation &op)
 {
-    try {
+    try
+    {
+        //TODO:
+
+        return void_result();
+    } FC_CAPTURE_AND_RETHROW((op))
+}
+
+object_id_type smart_contract_deploy_evaluator::do_apply(const smart_contract_deploy_operation &o)
+{
+    try
+    {
+        FC_ASSERT(!o.abi_json.empty(), "empty abi not allowed for smart contract");
+        auto &v = fc::json::from_string(o.abi_json);
+
+        contract_addr_type rehash = fc::sha256::hash(o.bytecode + o.abi_json + o.construct_data);
+        FC_ASSERT(o.contract_addr == rehash, "bad hash for smart contract");
+
         database &d = db();
         const auto & new_smart_contract_object = db().create<contract_object>(
-            [&](contract_object &obj) {
-                obj.registrar     = o.uploader;
-                obj.source        = o.smart_contract;            
-                obj.contract_addr = fc::hash64(o.contract_addr_str.c_str(), o.contract_addr_str.size());
-                obj.data          = "";
-                obj.state         = 0; //not activated
+            [&](contract_object &obj)
+            {
+                obj.owner               = o.owner;
+                obj.contract_addr       = o.contract_addr;
+                obj.bytecode            = o.bytecode;
+                obj.construct_data      = o.construct_data;
+                obj.abi_json            = o.abi_json;
+                obj.contract_name       = o.contract_name;
+                obj.state               = 1;                 //activated
 
-                ilog("smart contract addr is ${a}", ("a", obj.contract_addr));
+                ilog("deploy smart contract, addr: ${a}, name: ${n}", ("a", obj.contract_addr)("n", obj.contract_name));
             }
         );
 
@@ -310,94 +313,138 @@ object_id_type smart_contract_upload_evaluator::do_apply(const smart_contract_up
 
 void_result smart_contract_activate_evaluator::do_evaluate(const smart_contract_activate_operation &op)
 {
-    try {
+    try
+    {
         const database &d = db();
 
-        //下面可以对合约的状态进行判断，如果状态是非未激活状态，那么合约激活失败。
-        //并且要评估激活人是否有资格激活合约，现阶段检验激活人是否是合约对象的拥有者即可
-        FC_ASSERT( 0 == 0, "smart_contract_activate_evaluator::do_evaluate is called" );
-        //std::cout<<"smart_contract_activate_evaluator::do_evaluate is called by std::cout"<<std::endl;
+        //TODO:
+        
+        return void_result();
+    } FC_CAPTURE_AND_RETHROW((op))
+}
+
+void_result smart_contract_activate_evaluator::do_apply(const smart_contract_activate_operation &op)
+{
+    try
+    {
+        database & d = db();
+
+        auto & index = d.get_index_type<contract_index>().indices().get<by_contract_addr>();
+        auto itr = index.find(op.contract_addr);
+        FC_ASSERT(itr != index.end(), "smart contract not found: ${a}", ("a", op.contract_addr));
+
+        const auto &contract_obj = d.find(itr->get_id());
+        FC_ASSERT(contract_obj->owner == op.activator, "only owner ${o} can activate smart contract ${c}",
+            ("o", contract_obj->owner)("c", op.contract_addr));
+
+        ilog("activated smart contract, addr: ${a}, name: ${n}",
+            ("a", contract_obj->contract_addr)("n", contract_obj->contract_name));
+
+        d.update_contract_state(op.contract_addr, 1);
+        return void_result();
+    } FC_CAPTURE_AND_RETHROW((op))
+}
+
+void_result smart_contract_deactivate_evaluator::do_evaluate(const smart_contract_deactivate_operation &op)
+{
+    try
+    {
+        const database &d = db();
+
+        //TODO:
+        
+        return void_result();
+    } FC_CAPTURE_AND_RETHROW((op))
+}
+
+void_result smart_contract_deactivate_evaluator::do_apply(const smart_contract_deactivate_operation &op)
+{
+    try
+    {
+        database & d = db();
+
+        auto & index = d.get_index_type<contract_index>().indices().get<by_contract_addr>();
+        auto itr = index.find(op.contract_addr);
+        FC_ASSERT(itr != index.end(), "smart contract not found: ${a}", ("a", op.contract_addr));
+
+        const auto &contract_obj = d.find(itr->get_id());
+        FC_ASSERT(contract_obj->owner == op.deactivator, "only owner ${o} can deactivate smart contract ${c}",
+            ("o", contract_obj->owner)("c", op.contract_addr));
+
+        ilog("deactivated smart contract, addr: ${a}, name: ${n}",
+            ("a", contract_obj->contract_addr)("n", contract_obj->contract_name));
+
+        d.update_contract_state(op.contract_addr, 0);
+        return void_result();
+    } FC_CAPTURE_AND_RETHROW((op))
+}
+
+void_result smart_contract_kill_evaluator::do_evaluate(const smart_contract_kill_operation &op)
+{
+    try
+    {
+        const database &d = db();
+
+        //TODO:
 
         return void_result();
     } FC_CAPTURE_AND_RETHROW((op))
 }
 
-void_result smart_contract_activate_evaluator::do_apply(const smart_contract_activate_operation &o)
+void_result smart_contract_kill_evaluator::do_apply(const smart_contract_kill_operation &op)
 {
-    try {
-        //   const database& d = db();
-        FC_ASSERT( 0 == 0, "smart_contract_activate_evaluator::do_apply() is called" );
-        //auto contract_obj = db().find_contract_addrs({o.smart_contract_id});
-        const auto &contract_obj = db().get<contract_object>(o.smart_contract_id);
-        string contract_source_code_class = contract_obj.source;
-        string init_data = o.init_data;
+    try
+    {
+        //TODO:
 
-        //下面可以对合约的状态进行判断，如果状态是非未激活状态，那么合约激活失败。
-        //并且要评估激活人是否有资格激活合约，现阶段检验激活人是否是合约对象的拥有者即可
-        FC_ASSERT( 0 == 0, "smart_contract_activate_evaluator::do_evaluate is called" );
-        std::cout<<"smart_contract_activate_evaluator::do_evaluate() is called by std::cout"<<std::endl;
+        auto & index = db().get_index_type<contract_index>().indices().get<by_contract_addr>();
+        auto itr = index.find(op.contract_addr);
+        FC_ASSERT(itr != index.end(), "smart contract not found: ${a}", ("a", op.contract_addr));
 
-        string output = run_wren_vm_when_activating_smart_contract(contract_source_code_class, init_data);//首次激活合约时调用的接口函数
-   
-        std::cout<<"contract_source_code_class = "<<contract_source_code_class<<std::endl;
-        std::cout<<"init_data = "<<init_data<<std::endl;
-        std::cout<<"output ="<<output<<std::endl;
-        db().update_contract_data(o.smart_contract_id, output, 1/*表示现在是已激活状态*/);
+        const auto &contract_obj = db().find(itr->get_id());
+        FC_ASSERT(contract_obj->owner == op.killer, "only owner ${o} can kill smart contract ${c}",
+            ("o", contract_obj->owner)("c", op.contract_addr));
+
+        ilog("killed smart contract, addr: ${a}, name: ${n}",
+            ("a", contract_obj->contract_addr)("n", contract_obj->contract_name));
+
+        db().remove(*contract_obj);
+
         return void_result();
-    } FC_CAPTURE_AND_RETHROW((o))
+    } FC_CAPTURE_AND_RETHROW((op))
 }
 
 void_result smart_contract_call_evaluator::do_evaluate(const smart_contract_call_operation &op)
 {
-    try {
+    try
+    {
         const database& d = db();
 
-        //将op中表示的合约的调用者caller时候有权限调用该合约。这步可以后期完善。
-        FC_ASSERT( 0 == 0, "smart_contract_call_evaluator::do_evaluate() is called" );
-        std::cout<<"smart_contract_call_evaluator::do_evaluate() is called by std::cout"<<std::endl;
+        //TODO:
+
         return void_result();
     } FC_CAPTURE_AND_RETHROW((op))
 }
 
-void_result smart_contract_call_evaluator::do_apply(const smart_contract_call_operation &o)
+void_result smart_contract_call_evaluator::do_apply(const smart_contract_call_operation &op)
 {
-    try {
-        //string src_code = db().get_source_code(contract_id_type)
-        //调用wren虚拟机执行合约
-   
-        //db().update_contract_data(o.smart_contract_id, output, 1/*表示现在是已激活状态*/);
-        const auto &contract_obj = db().get<contract_object>(o.contract_id);
-        string contract_source_code_class = contract_obj.source;
-        string data_state = contract_obj.data;
-        cout<<data_state<<endl;
+    try
+    {
+        //TODO: save/load smart contract state variables.
 
-        data_state = invoke_smart_contract(contract_source_code_class, o.method_name_and_parameter, data_state);
-        FC_ASSERT( 0 == 0, "smart_contract_run_evaluator::do_apply() is called" );
-        std::cout<<"data_state ="<<data_state<<std::endl;
-        std::cout<<"***************************************************************"<<std::endl;
-        db().update_contract_data(o.contract_id, data_state, 1/*表示现在是已激活状态*/);
-        std::cout<<"smart_contract_call_evaluator::do_evaluate() is called by std::cout"<<std::endl;
-        return void_result();
-    } FC_CAPTURE_AND_RETHROW((o))
-}
+        auto & index = db().get_index_type<contract_index>().indices().get<by_contract_addr>();
+        auto itr = index.find(op.contract_addr);
+        FC_ASSERT(itr != index.end(), "smart contract not found: ${a}", ("a", op.contract_addr));
 
-void_result data_digest_upload_evaluator::do_evaluate(const data_digest_upload_operation &op)
-{
-    try {
-        const database& d = db();
-        FC_ASSERT( 0 == 0, "data_digest_upload_evaluator::do_evaluate() is called" );
-        std::cout<<"data_digest_upload_evaluator::do_evaluate() is called by std::cout"<<std::endl;
+        const auto &contract_obj = db().find(itr->get_id());
+
+        ilog("call smart contract, addr: ${a}, name: ${n}, call data ${d}",
+            ("a", contract_obj->contract_addr)("n", contract_obj->contract_name)("d", op.call_data));
+
+        invoke_smart_contract(contract_obj->bytecode, contract_obj->contract_addr, op.call_data, contract_obj->abi_json, "");
+
         return void_result();
     } FC_CAPTURE_AND_RETHROW((op))
-}
-
-void_result data_digest_upload_evaluator::do_apply(const data_digest_upload_operation &o)
-{
-    try {
-        FC_ASSERT( 0 == 0, "data_digest_upload_evaluator::do_apply() is called" );
-        std::cout<<"data_digest_upload_evaluator::do_evaluate() is called by std::cout"<<std::endl;
-        return void_result();
-    } FC_CAPTURE_AND_RETHROW((o))
 }
 
 void_result account_update_evaluator::do_evaluate( const account_update_operation& o )

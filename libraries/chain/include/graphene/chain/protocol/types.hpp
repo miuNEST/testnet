@@ -202,6 +202,8 @@ namespace graphene { namespace chain {
    typedef object_id< protocol_ids, balance_object_type,            balance_object>               balance_id_type;
    typedef object_id< protocol_ids, contract_object_type,           contract_object>              contract_id_type;
 
+   typedef string contract_addr_type; //sha256 hash string of smart contract byte code
+
    // implementation types
    class global_property_object;
    class dynamic_global_property_object;
@@ -249,10 +251,7 @@ namespace graphene { namespace chain {
    typedef fc::ecc::compact_signature                           signature_type;
    typedef safe<int64_t>                                        share_type;
    typedef uint16_t                                             weight_type;
-   typedef std::string                                          smart_contract_type;//smart contract type, by Victor Sun
-   typedef std::string                                          smart_contract_input_parameter_type;//input parameter type for smart contract running, by Victor Sun
-   typedef std::string                                          smart_contract_output_parameter_type;//output parameter type for smart contract running, by Victor Sun
-
+   
    struct public_key_type
    {
        struct binary_key

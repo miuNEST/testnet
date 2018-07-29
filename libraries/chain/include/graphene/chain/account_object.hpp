@@ -372,26 +372,29 @@ namespace graphene { namespace chain {
 
     class contract_object;
 
-   class contract_object_index : public graphene::db::abstract_object<contract_object_index>
-   {
-      public:
-         static const bool isIndex = true;
-         //using obj_type = contract_object;
-         account_id_type registrar;
-         uint64_t        contract_addr;
-         uint8_t         state;
+   //class contract_object_index : public graphene::db::abstract_object<contract_object_index>
+   //{
+   //   public:
+   //      static const bool isIndex = true;
+   //      //using obj_type = contract_object;
+   //      account_id_type owner;
+   //      string          contract_id;
+   //      uint8_t         state;
 
-         contract_object_index  & operator=  (const contract_object_index & _index) {
-            if (&_index != this) {
-               id            = _index.id;
-               contract_addr = _index.contract_addr;
-               state         = _index.state;
-            }
-            return *this;
-         }
+   //      contract_object_index  & operator=  (const contract_object_index & _index)
+   //      {
+   //         if (&_index != this)
+   //         {
+   //            id            = _index.id;
+   //            owner         = _index.owner;
+   //            contract_id   = _index.contract_id;
+   //            state         = _index.state;
+   //         }
+   //         return *this;
+   //      }
 
-         contract_id_type get_id()const { return id; }
-   };
+   //      contract_id_type get_id()const { return id; }
+   //};
 
    class contract_object : public graphene::db::abstract_object<contract_object>
    {
@@ -399,7 +402,7 @@ namespace graphene { namespace chain {
          static const uint8_t space_id = protocol_ids;
          static const uint8_t type_id  = contract_object_type;
 
-         mutable contract_object_index obj_index;
+         //mutable contract_object_index obj_index;
 
          //const contract_object_index &getObjIndex() const {
          //   obj_index.contract_addr = this->contract_addr;
@@ -409,11 +412,13 @@ namespace graphene { namespace chain {
          //   return obj_index;
          //}
 
-         account_id_type registrar;
-         string          source;
-         uint64_t        contract_addr;
-         string          data;
-         uint8_t         state;
+         account_id_type          owner;         
+         contract_addr_type       contract_addr;
+         string                   bytecode;
+         string                   abi_json;
+         string                   construct_data;
+         string                   contract_name;
+         uint8_t                  state;
 
          typedef account_options  options_type;
          options_type options;
@@ -423,26 +428,27 @@ namespace graphene { namespace chain {
 
    struct by_contract_addr {};
 
-   typedef multi_index_container<
-      contract_object_index,
-      indexed_by<
-      ordered_unique< tag<by_id>, member< object, object_id_type, &object::id > >,
-      ordered_unique< tag<by_contract_addr>, member< contract_object_index, uint64_t, &contract_object_index::contract_addr >>
-      >
-   > contract_multi_index_type;
+   //typedef multi_index_container<
+   //   contract_object_index,
+   //   indexed_by<
+   //   ordered_unique< tag<by_id>, member< object, object_id_type, &object::id > >,
+   //   ordered_unique< tag<by_contract_id>, member< contract_object_index, uint64_t, &contract_object_index::contract_addr >>
+   //   >
+   //> contract_multi_index_type;
    
 
    typedef multi_index_container<
       contract_object,
       indexed_by<
       ordered_unique< tag<by_id>, member< object, object_id_type, &object::id > >,
-      ordered_unique< tag<by_contract_addr>, member< contract_object, uint64_t, &contract_object::contract_addr >>
+      ordered_unique< tag<by_contract_addr>, member< contract_object, contract_addr_type, &contract_object::contract_addr >>
       >
-   > org_contract_multi_index_type;
+   > contract_multi_index_type;
 
-   typedef generic_index<contract_object_index, contract_multi_index_type>     contract_index;
-   typedef generic_index<contract_object, org_contract_multi_index_type>       org_contract_index;
-}}
+   //typedef generic_index<contract_object_index, contract_multi_index_type>     contract_index;
+   typedef generic_index<contract_object, contract_multi_index_type>       contract_index;
+}
+}
 
 FC_REFLECT_DERIVED( graphene::chain::account_object,
                     (graphene::db::object),
@@ -469,19 +475,22 @@ FC_REFLECT_DERIVED( graphene::chain::account_statistics_object,
                     (lifetime_fees_paid)
                     (pending_fees)(pending_vested_fees)
                   )
+
 FC_REFLECT_DERIVED( graphene::chain::contract_object,
                    (graphene::db::object),
-                   (registrar)
+                   (owner)
                    (contract_addr)
-                   (source)
-                   (data)
+                   (bytecode)
+                   (abi_json)
+                   (construct_data)
+                   (contract_name)
                    (state)
                   )
 
-FC_REFLECT_DERIVED( graphene::chain::contract_object_index,
-                   (graphene::db::object),
-                   (registrar)
-                   (contract_addr)
-                   (state)
-                  )
+//FC_REFLECT_DERIVED( graphene::chain::contract_object_index,
+//                   (graphene::db::object),
+//                   (owner)
+//                   (contract_id)
+//                   (state)
+//                  )
 

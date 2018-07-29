@@ -31,31 +31,25 @@
 
 namespace graphene { namespace chain {
 
-void database::update_contract_data(contract_id_type contract, std::string &data, uint8_t state)
+bool database::update_contract_state(const contract_addr_type & contract_addr, uint8_t state)
 {
-    try {
-        if ( data.size() == 0 )
-            return ;
+    try
+    {
+        auto & index = get_index_type<contract_index>().indices().get<by_contract_addr>();
+        auto itr = index.find(contract_addr);
+        if (itr == index.end())
+            return false;
 
-        auto & index = get_index_type<contract_index>().indices().get<by_id>();
-        auto itr = index.find(contract);
-        if (itr == index.end()) {
-            FC_ASSERT( data.size() > 0, "Contract data: ${a}'s data empty: ${b}",
-                ("a",(contract.instance))
-                ("b",(data))
-            );
-        }
-        else {
-            const auto &_contract = find(itr->get_id()); 
-            modify(*_contract, 
-                [&](contract_object & b) {
-                    b.data.empty();
-                    b.data = data;
-                    b.state = state;
-                }
-            );
-        }
-    } FC_CAPTURE_AND_RETHROW((contract)(data)(state))
+        const auto &_contract = find(itr->get_id()); 
+        modify(*_contract, 
+            [&](contract_object & b)
+            {
+                b.state = state;
+            }
+        );
+
+        return true;
+    } FC_CAPTURE_AND_RETHROW((contract_addr)(state))
 }
 
 

@@ -253,6 +253,15 @@ class wallet_api_impl
 public:
    api_documentation method_documentation;
 private:
+
+    //return first account id of this wallet
+    account_id_type get_wallet_account_id()
+    {
+        const auto &ids = _wallet.my_account_ids();
+        FC_ASSERT(!ids.empty(), "empty wallet accounts");
+        return ids[0];
+    }
+
    void claim_registered_account(const account_object& account)
    {
       auto it = _wallet.pending_account_registrations.find( account.name );
@@ -593,45 +602,42 @@ public:
  //     return *rec;
  //  }
 
-   contract_object get_contract(uint64_t contract_id) const
+   contract_object get_contract(const contract_addr_type &contract_addr) const
    {
-      // find wallet.contract
-      // if( _wallet.my_accounts.get<by_id>().count(id) )
-      //    return *_wallet.my_accounts.get<by_id>().find(id);
-      auto rec = _remote_db->lookup_contract_addrs({contract_id}).front();
+      auto rec = _remote_db->lookup_contracts({contract_addr}).front();
       FC_ASSERT(rec);
       return *rec;
    }
 
-   contract_object get_contract(const string &contract_add) const
-   {
-      FC_ASSERT( contract_add.size() > 0 );
+   //contract_object get_contract(const string &contract_add) const
+   //{
+   //   FC_ASSERT( contract_add.size() > 0 );
 
 
-      if (auto id = maybe_id<uint64_t>(contract_add))
-      {
-         // It's an ID
-          return get_contract(*id);
-      } else {
-            return contract_object();
-         // It's a name
-      //    if( _wallet.my_accounts.get<by_name>().count(account_name_or_id) )
-      //    {
-      //       auto local_account = *_wallet.my_accounts.get<by_name>().find(account_name_or_id);
-      //       auto blockchain_account = _remote_db->lookup_account_names({account_name_or_id}).front();
-      //       FC_ASSERT( blockchain_account );
-      //       if (local_account.id != blockchain_account->id)
-      //          elog("my account id ${id} different from blockchain id ${id2}", ("id", local_account.id)("id2", blockchain_account->id));
-      //       if (local_account.name != blockchain_account->name)
-      //          elog("my account name ${id} different from blockchain name ${id2}", ("id", local_account.name)("id2", blockchain_account->name));
+   //   if (auto id = maybe_id<uint64_t>(contract_add))
+   //   {
+   //      // It's an ID
+   //       return get_contract(*id);
+   //   } else {
+   //         return contract_object();
+   //      // It's a name
+   //   //    if( _wallet.my_accounts.get<by_name>().count(account_name_or_id) )
+   //   //    {
+   //   //       auto local_account = *_wallet.my_accounts.get<by_name>().find(account_name_or_id);
+   //   //       auto blockchain_account = _remote_db->lookup_account_names({account_name_or_id}).front();
+   //   //       FC_ASSERT( blockchain_account );
+   //   //       if (local_account.id != blockchain_account->id)
+   //   //          elog("my account id ${id} different from blockchain id ${id2}", ("id", local_account.id)("id2", blockchain_account->id));
+   //   //       if (local_account.name != blockchain_account->name)
+   //   //          elog("my account name ${id} different from blockchain name ${id2}", ("id", local_account.name)("id2", blockchain_account->name));
 
-      //       return *_wallet.my_accounts.get<by_name>().find(account_name_or_id);
-      //    }
-      //    auto rec = _remote_db->lookup_account_names({account_name_or_id}).front();
-      //    FC_ASSERT( rec && rec->name == account_name_or_id );
-      //    return *rec;
-      }
-   }
+   //   //       return *_wallet.my_accounts.get<by_name>().find(account_name_or_id);
+   //   //    }
+   //   //    auto rec = _remote_db->lookup_account_names({account_name_or_id}).front();
+   //   //    FC_ASSERT( rec && rec->name == account_name_or_id );
+   //   //    return *rec;
+   //   }
+   //}
 
 
    account_id_type get_account_id(string account_name_or_id) const
@@ -1175,149 +1181,133 @@ public:
       } FC_CAPTURE_AND_RETHROW( (account_name)(registrar_account)(referrer_account) )
    }
 
-    signed_transaction upload_smart_contract(string uploader,
-                                             string smart_contract_code,
-                                             bool broadcast = false)
+   //bytecode must be base64-encoded.
+   signed_transaction deploy_contract(string bytecode,
+                                      string abi_json,
+                                      string construct_data,
+                                      string contract_name,
+                                      bool broadcast /* = true */)
     {
-        try {
+        try
+        {
             FC_ASSERT(!self.is_locked());
+            FC_ASSERT(fc::base64_decode(bytecode).size() > 0, "currently byte code must be base64-encoded");
 
-            //std::cout<<"starting doing upload_smart_contract is functional"<<std::endl;
+            smart_contract_deploy_operation deploy_op;      
+            deploy_op.owner          = get_wallet_account_id();
+            deploy_op.bytecode       = bytecode;
+            deploy_op.abi_json       = abi_json;
+            deploy_op.construct_data = construct_data;
+            deploy_op.contract_name  = contract_name;
+            deploy_op.contract_addr  = fc::sha256::hash(bytecode + abi_json + construct_data);
 
-            smart_contract_upload_operation upload_op;
-      
-            account_object uploader_account_object = get_account(uploader);
-            account_id_type uploader_account_id = uploader_account_object.id;
-
-            //TODO: remove time from smart contract addr
-
-            //fc::time_point_sec now = _remote_db->get_dynamic_global_properties().time;
-            //string contract_addr = fc::sha256::hash(uploader + smart_contract_code + now.to_iso_string());
-
-            string contract_addr = fc::sha256::hash(uploader + smart_contract_code);            
-
-            upload_op.uploader          = uploader_account_id;
-            upload_op.smart_contract    = smart_contract_code;
-            upload_op.contract_addr_str = contract_addr;
+            ilog("deploy smart contract, addr: ${a}, name: ${n}", ("a", deploy_op.contract_addr)("n", deploy_op.contract_name));
 
             signed_transaction tx;
-            tx.operations.push_back(upload_op);
+            tx.operations.push_back(deploy_op);
             set_operation_fees(tx, _remote_db->get_global_properties().parameters.current_fees);
             tx.validate();
-            //std::cout<<"Finishing doing upload_smart_contract is functional"<<std::endl;
             return sign_transaction(tx, broadcast);
-        } FC_CAPTURE_AND_RETHROW((uploader)(smart_contract_code)(broadcast))
+        } FC_CAPTURE_AND_RETHROW((bytecode)(abi_json)(construct_data)(contract_name)(broadcast))
     }
 
 
-    signed_transaction upload_smart_contract_from_file(string uploader,
-                                                       string smart_contract_code_path,
-                                                       bool broadcast = false)
+    signed_transaction upload_contract(string bytecode_file,
+                                       string abi_json,
+                                       string construct_data,
+                                       string contract_name,
+                                       bool broadcast /* = true */)
     {
-        try {
+        try
+        {
             FC_ASSERT( !self.is_locked());
 
-            //TODO: to ensure uploader is the owner of current connection .
+            std::ifstream input(bytecode_file, std::fstream::binary);
+            std::vector<char> buffer((std::istreambuf_iterator<char>(input)),
+                                             std::istreambuf_iterator<char>());
+            FC_ASSERT(!buffer.empty());
 
-            std::ifstream in(smart_contract_code_path);
-            std::ostringstream tmp;
-            tmp << in.rdbuf();
-            string src_code_data = tmp.str();
-            FC_ASSERT(!src_code_data.empty());
-
-            return upload_smart_contract(uploader, src_code_data, broadcast);
-        } FC_CAPTURE_AND_RETHROW((uploader)(smart_contract_code_path)(broadcast))
+            return deploy_contract(fc::base64_encode(&buffer[0], buffer.size()), 
+                                   abi_json, construct_data, contract_name, broadcast);
+        } FC_CAPTURE_AND_RETHROW((bytecode_file)(abi_json)(construct_data)(contract_name)(broadcast))
     }
 
-    signed_transaction activate_smart_contract(string activator,
-                                               string smart_contract_addr,
-                                               string init_data,
-                                               bool broadcast = true)
+    signed_transaction activate_contract(contract_addr_type contract_addr,
+                                         bool broadcast /* = true */)
     {
-        try {
+        try
+        {
             FC_ASSERT( !self.is_locked() );
 
-            //std::cout<<"starting doing activate_smart_contract is functional"<<std::endl;
-
-            smart_contract_activate_operation activate_op;
-      
-            account_object activator_account_object = get_account(activator);
-            account_id_type activator_account_id = activator_account_object.id;
-
-            activate_op.activator = activator_account_id;
-
-            contract_object activated_contract_object = get_contract(smart_contract_addr);
-            contract_id_type activated_contract_id =  activated_contract_object.id;
-      
-            activate_op.smart_contract_id = activated_contract_id;
-            //std::cout<<"init_data = "<<init_data<<std::endl;
-            activate_op.init_data = init_data;
+            smart_contract_activate_operation activate_op;                       
+            activate_op.activator     = get_wallet_account_id();
+            activate_op.contract_addr = contract_addr;
 
             signed_transaction tx;
-            tx.operations.push_back( activate_op );
-            set_operation_fees( tx, _remote_db->get_global_properties().parameters.current_fees);
+            tx.operations.push_back(activate_op);
+            set_operation_fees(tx, _remote_db->get_global_properties().parameters.current_fees);
             tx.validate();
-            //std::cout<<"Finishing doing activate_smart_contract is functional"<<std::endl;
-            return sign_transaction( tx, broadcast );
-        } FC_CAPTURE_AND_RETHROW((activator)(smart_contract_addr)(init_data)(broadcast))
+            return sign_transaction(tx, broadcast);
+        } FC_CAPTURE_AND_RETHROW((contract_addr)(broadcast))
     }
 
-    signed_transaction call_smart_contract(string caller,
-                                           string contract_adds,
-                                           string method_name_and_parameter,
-                                           bool broadcast = true)
+    signed_transaction deactivate_contract(contract_addr_type contract_addr,
+                                           bool broadcast /* = true */)
     {
-        try {
+        try
+        {
+            FC_ASSERT(!self.is_locked());
+
+            smart_contract_deactivate_operation deactivate_op;
+            deactivate_op.deactivator   = get_wallet_account_id();
+            deactivate_op.contract_addr = contract_addr;
+
+            signed_transaction tx;
+            tx.operations.push_back(deactivate_op);
+            set_operation_fees(tx, _remote_db->get_global_properties().parameters.current_fees);
+            tx.validate();
+            return sign_transaction(tx, broadcast);
+        } FC_CAPTURE_AND_RETHROW((contract_addr)(broadcast))
+    }
+
+    signed_transaction kill_contract(contract_addr_type contract_addr,
+                                     bool broadcast /* = true */)
+    {
+        try
+        {
+            FC_ASSERT(!self.is_locked());
+
+            smart_contract_kill_operation kill_op;
+            kill_op.killer        = get_wallet_account_id();
+            kill_op.contract_addr = contract_addr;
+
+            signed_transaction tx;
+            tx.operations.push_back(kill_op);
+            set_operation_fees(tx, _remote_db->get_global_properties().parameters.current_fees);
+            tx.validate();
+            return sign_transaction(tx, broadcast);
+        } FC_CAPTURE_AND_RETHROW((contract_addr)(broadcast))
+    }
+
+    signed_transaction call_contract(contract_addr_type contract_addr,
+                                     string call_data,
+                                     bool broadcast = true)
+    {
+        try
+        {
             FC_ASSERT( !self.is_locked() );
 
-            //std::cout<<"Starting doing run_smart_contract!"<<std::endl;
-
-            smart_contract_call_operation call_op;
-      
-            account_object caller_account_object = get_account( caller );
-            account_id_type caller_account_id = caller_account_object.id;
-
-            contract_object called_contract_object = get_contract(contract_adds);
-            contract_id_type called_contract_id = called_contract_object.id;
-
-            call_op.caller                    = caller_account_id;
-            call_op.contract_id               = called_contract_id;
-            call_op.method_name_and_parameter = method_name_and_parameter;
-            //      call_op.input_parameters = input_parameters;
-            //      run_op.output_parameter = output_parameter;
+            smart_contract_call_operation call_op;     
+            call_op.caller                    = get_wallet_account_id();
+            call_op.contract_addr             = contract_addr;
+            call_op.call_data                 = call_data;
 
             signed_transaction tx;
             tx.operations.push_back(call_op);
             set_operation_fees(tx, _remote_db->get_global_properties().parameters.current_fees);
             tx.validate();
             return sign_transaction(tx, broadcast);
-        } FC_CAPTURE_AND_RETHROW((caller)(contract_adds)(method_name_and_parameter)(broadcast))
-    }
-
-    signed_transaction upload_data_digest(string uploader,
-                                          const string data,
-                                          bool broadcast = false)
-    {
-        try {
-            FC_ASSERT(!self.is_locked());
-
-            //std::cout<<"Starting uploading data digest"<<std::endl;
-
-            data_digest_upload_operation upload_op;
-      
-            account_object uploader_account_object = get_account( uploader );
-            account_id_type uploader_account_id = uploader_account_object.id;
-
-            upload_op.uploader = uploader_account_id;
-            upload_op.data_digest = fc::sha256::hash(data);
-            //static sha256 hash( const string& );
-            signed_transaction tx;
-            tx.operations.push_back( upload_op );
-            //      set_operation_fees( tx, _remote_db->get_global_properties().parameters.current_fees);
-            tx.validate();
-            //std::cout<<"Finishing uploading data digest!"<<std::endl;
-            return sign_transaction(tx, broadcast);
-        } FC_CAPTURE_AND_RETHROW((uploader)(data)(broadcast))
+        } FC_CAPTURE_AND_RETHROW((contract_addr)(call_data)(broadcast))
     }
 
    signed_transaction create_asset(string issuer,
@@ -3473,44 +3463,42 @@ signed_transaction wallet_api::create_account_with_brain_key(string brain_key, s
             );
 }
 
-
-//upload_smart_contract api added by Victor Sun
-signed_transaction wallet_api::upload_smart_contract(string uploader, string smart_contract_code, bool broadcast /*= true*/)
+signed_transaction wallet_api::deploy_contract(string bytecode,
+                                               string abi_json,
+                                               string construct_data,
+                                               string contract_name,
+                                               bool broadcast /*= true*/)
 {
-   return my->upload_smart_contract(uploader, smart_contract_code, broadcast);
+    return my->deploy_contract(bytecode, abi_json, construct_data, contract_name, broadcast);
 }
 
-//upload_smart_contract_from_file api added by Victor Sun
-signed_transaction wallet_api::upload_smart_contract_from_file(string uploader, string smart_contract_code_path, bool broadcast /*= true*/)
+signed_transaction wallet_api::upload_contract(string bytecode_file,
+                                               string abi_json,
+                                               string construct_data,
+                                               string contract_name,
+                                               bool broadcast /* = true */)
 {
-   return my->upload_smart_contract_from_file(uploader, smart_contract_code_path, broadcast);
+    return my->upload_contract(bytecode_file, abi_json, construct_data, contract_name, broadcast);
 }
 
-//run_smart_contract api added by Victor Sun
-signed_transaction wallet_api::activate_smart_contract(string activator, string smart_contract_addr, string init_data, bool broadcast /*= true*/)
+signed_transaction wallet_api::activate_contract(contract_addr_type contract_addr, bool broadcast /*= true*/)
 {
-   return my->activate_smart_contract(activator, smart_contract_addr, init_data, broadcast);
+    return my->activate_contract(contract_addr, broadcast);
 }
 
-
-
-signed_transaction wallet_api::call_smart_contract(string caller, string contract_adds, string method_name_and_parameter, bool broadcast /*= true*/)
+signed_transaction wallet_api::deactivate_contract(contract_addr_type contract_addr, bool broadcast /*= true*/)
 {
-   return my->call_smart_contract(caller, contract_adds, method_name_and_parameter, broadcast);
+    return my->deactivate_contract(contract_addr, broadcast);
 }
 
-//run_smart_contract api added by Victor Sun
-//signed_transaction wallet_api::run_smart_contract_from_file(string caller, string wren_src_file_path, string class_name, string method_name, string input_parameters, bool broadcast /*= true*/)
-//{
-//   return my->run_smart_contract_from_file(caller, wren_src_file_path, class_name, method_name, input_parameters, broadcast);
-//}
-
-
-
-//upload data digest api added by Victor Sun
-signed_transaction wallet_api::upload_data_digest(string uploader, const string data, bool broadcast /*= true*/)
+signed_transaction wallet_api::kill_contract(contract_addr_type contract_addr, bool broadcast /*= true*/)
 {
-   return my->upload_data_digest(uploader, data, broadcast);
+    return my->kill_contract(contract_addr, broadcast);
+}
+
+signed_transaction wallet_api::call_contract(contract_addr_type contract_addr, string call_data, bool broadcast /*= true*/)
+{
+    return my->call_contract(contract_addr, call_data, broadcast);
 }
 
 signed_transaction wallet_api::issue_asset(string to_account, string amount, string symbol,

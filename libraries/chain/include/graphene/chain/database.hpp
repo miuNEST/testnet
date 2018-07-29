@@ -283,28 +283,30 @@ namespace graphene { namespace chain {
                operation::tag<typename EvaluatorType::operation_type>::value].reset( new op_evaluator_impl<EvaluatorType>() );
          }
 
-         void update_contract_data(contract_id_type contract, string &data, uint8_t state);
+         bool update_contract_state(const contract_addr_type &contract_addr, uint8_t state);
 
-        vector<optional<contract_object>> find_contract_addrs(vector<uint64_t> contract_addrs)
-        {
-           const auto& contract_by_addr = get_index_type<contract_index>().indices().get<by_contract_addr>();
+        //vector<optional<contract_object>> find_contract_addrs(vector<uint64_t> contract_addrs)
+        //{
+        //   const auto& contract_by_id = get_index_type<contract_index>().indices().get<by_contract_id>();
 
-           vector<optional<contract_object> > result;
-           result.reserve(contract_addrs.size());
+        //   vector<optional<contract_object> > result;
+        //   result.reserve(contract_addrs.size());
 
-           std::transform(contract_addrs.begin(), contract_addrs.end(), std::back_inserter(result),
-              [&](const uint64_t& addr) -> optional<contract_object> {
-                 auto itr = contract_by_addr.find(addr);
-                 if(itr != contract_by_addr.end()){
-                    const auto &_contractObj = find(itr->get_id());
-                    return *_contractObj;
-                 }
-                 return optional<contract_object>();
-              }
-           );
+        //   std::transform(contract_addrs.begin(), contract_addrs.end(), std::back_inserter(result),
+        //      [&](const uint64_t& addr) -> optional<contract_object>
+        //      {
+        //         auto itr = contract_by_id.find(addr);
+        //         if(itr != contract_by_id.end())
+        //         {
+        //            const auto &_contractObj = find(itr->get_id());
+        //            return *_contractObj;
+        //         }
+        //         return optional<contract_object>();
+        //      }
+        //   );
 
-           return result;
-        }
+        //   return result;
+        //}
 
         ////////
 

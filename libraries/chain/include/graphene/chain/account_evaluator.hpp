@@ -69,17 +69,15 @@ public:
    const account_object* listed_account;
 };
 
-//added by Victor Sun
-class smart_contract_upload_evaluator : public evaluator<smart_contract_upload_evaluator>
+class smart_contract_deploy_evaluator : public evaluator<smart_contract_deploy_evaluator>
 {
 public:
-   typedef smart_contract_upload_operation operation_type;
+   typedef smart_contract_deploy_operation operation_type;
 
-   void_result do_evaluate(const smart_contract_upload_operation& o);
-   object_id_type do_apply(const smart_contract_upload_operation& o);
+   void_result do_evaluate(const smart_contract_deploy_operation& o);
+   object_id_type do_apply(const smart_contract_deploy_operation& o);
 };
 
-//added by Victor Sun
 class smart_contract_activate_evaluator : public evaluator<smart_contract_activate_evaluator>
 {
 public:
@@ -89,7 +87,24 @@ public:
    void_result do_apply(const smart_contract_activate_operation& o);
 };
 
-//added by Victor Sun
+class smart_contract_deactivate_evaluator : public evaluator<smart_contract_deactivate_evaluator>
+{
+public:
+    typedef smart_contract_deactivate_operation operation_type;
+
+    void_result do_evaluate(const smart_contract_deactivate_operation& o);
+    void_result do_apply(const smart_contract_deactivate_operation& o);
+};
+
+class smart_contract_kill_evaluator : public evaluator<smart_contract_kill_evaluator>
+{
+public:
+    typedef smart_contract_kill_operation operation_type;
+
+    void_result do_evaluate(const smart_contract_kill_operation& o);
+    void_result do_apply(const smart_contract_kill_operation& o);
+};
+
 class smart_contract_call_evaluator : public evaluator<smart_contract_call_evaluator>
 {
 public:
@@ -98,19 +113,11 @@ public:
    void_result do_evaluate(const smart_contract_call_operation& o);
    void_result do_apply(const smart_contract_call_operation& o);
 private:
-    string invoke_smart_contract(string input_source_code,
-        string contranct_method_and_parameter,
-        string starting_state);
-};
-
-//added by Victor Sun
-class data_digest_upload_evaluator : public evaluator<data_digest_upload_evaluator>
-{
-public:
-   typedef data_digest_upload_operation operation_type;
-
-   void_result do_evaluate(const data_digest_upload_operation& o);
-   void_result do_apply(const data_digest_upload_operation& o);
+    string invoke_smart_contract(const string &bytecode,
+                                 const contract_addr_type &contract_addr,
+                                 const string &call_data,
+                                 const string &abi_json,
+                                 const string &starting_state);
 };
 
 } } // graphene::chain

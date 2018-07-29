@@ -52,7 +52,8 @@ class database_api_impl : public std::enable_shared_from_this<database_api_impl>
    public:
       explicit database_api_impl( graphene::chain::database& db, const application_options* app_options );
       ~database_api_impl();
-      vector<optional<contract_object>> lookup_contract_addrs(const vector<uint64_t>& contract_addrs)const;
+
+      vector<optional<contract_object>> lookup_contracts(const vector<contract_addr_type> & contract_addrs) const;
 
       // Objects
       fc::variants get_objects(const vector<object_id_type>& ids)const;
@@ -767,22 +768,24 @@ vector<account_id_type> database_api_impl::get_account_references( account_id_ty
    return result;
 }
 
-vector<optional<contract_object>> database_api::lookup_contract_addrs(const vector<uint64_t> &contract_addrs) const
+vector<optional<contract_object>> database_api::lookup_contracts(const vector<contract_addr_type> &contract_addrs) const
 {
-    return my->lookup_contract_addrs(contract_addrs);
+    return my->lookup_contracts(contract_addrs);
 }
 
-vector<optional<contract_object>> database_api_impl::lookup_contract_addrs(const vector<uint64_t> & contract_addrs) const
+vector<optional<contract_object>> database_api_impl::lookup_contracts(const vector<contract_addr_type> &contract_addrs) const
 {
-    const auto & contract_by_addr = _db.get_index_type<org_contract_index>().indices().get<by_contract_addr>();
+    const auto & contract_by_addr = _db.get_index_type<contract_index>().indices().get<by_contract_addr>();
 
     vector<optional<contract_object>> result;
     result.reserve(contract_addrs.size());
 
     std::transform(contract_addrs.begin(), contract_addrs.end(), std::back_inserter(result),
-        [&](const uint64_t & addr) -> optional<contract_object> {
+        [&](const contract_addr_type & addr) -> optional<contract_object>
+        {
             auto itr = contract_by_addr.find(addr);
-            if (itr != contract_by_addr.end()) {
+            if (itr != contract_by_addr.end())
+            {
                 auto _p = _db.find(itr->get_id());
                 if (_p != nullptr)
                     return *_p;
