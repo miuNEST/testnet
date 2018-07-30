@@ -370,47 +370,11 @@ namespace graphene { namespace chain {
     */
    typedef generic_index<account_object, account_multi_index_type> account_index;
 
-    class contract_object;
-
-   //class contract_object_index : public graphene::db::abstract_object<contract_object_index>
-   //{
-   //   public:
-   //      static const bool isIndex = true;
-   //      //using obj_type = contract_object;
-   //      account_id_type owner;
-   //      string          contract_id;
-   //      uint8_t         state;
-
-   //      contract_object_index  & operator=  (const contract_object_index & _index)
-   //      {
-   //         if (&_index != this)
-   //         {
-   //            id            = _index.id;
-   //            owner         = _index.owner;
-   //            contract_id   = _index.contract_id;
-   //            state         = _index.state;
-   //         }
-   //         return *this;
-   //      }
-
-   //      contract_id_type get_id()const { return id; }
-   //};
-
    class contract_object : public graphene::db::abstract_object<contract_object>
    {
       public:
          static const uint8_t space_id = protocol_ids;
          static const uint8_t type_id  = contract_object_type;
-
-         //mutable contract_object_index obj_index;
-
-         //const contract_object_index &getObjIndex() const {
-         //   obj_index.contract_addr = this->contract_addr;
-         //   obj_index.state         = this->state;
-         //   obj_index.id            = this->id;
-
-         //   return obj_index;
-         //}
 
          account_id_type          owner;         
          contract_addr_type       contract_addr;
@@ -418,7 +382,8 @@ namespace graphene { namespace chain {
          string                   abi_json;
          string                   construct_data;
          string                   contract_name;
-         uint8_t                  state;
+         bool                     activated;
+         string                   contract_state;
 
          typedef account_options  options_type;
          options_type options;
@@ -428,15 +393,6 @@ namespace graphene { namespace chain {
 
    struct by_contract_addr {};
 
-   //typedef multi_index_container<
-   //   contract_object_index,
-   //   indexed_by<
-   //   ordered_unique< tag<by_id>, member< object, object_id_type, &object::id > >,
-   //   ordered_unique< tag<by_contract_id>, member< contract_object_index, uint64_t, &contract_object_index::contract_addr >>
-   //   >
-   //> contract_multi_index_type;
-   
-
    typedef multi_index_container<
       contract_object,
       indexed_by<
@@ -445,8 +401,7 @@ namespace graphene { namespace chain {
       >
    > contract_multi_index_type;
 
-   //typedef generic_index<contract_object_index, contract_multi_index_type>     contract_index;
-   typedef generic_index<contract_object, contract_multi_index_type>       contract_index;
+   typedef generic_index<contract_object, contract_multi_index_type> contract_index;
 }
 }
 
@@ -484,13 +439,6 @@ FC_REFLECT_DERIVED( graphene::chain::contract_object,
                    (abi_json)
                    (construct_data)
                    (contract_name)
-                   (state)
+                   (activated)
+                   (contract_state)
                   )
-
-//FC_REFLECT_DERIVED( graphene::chain::contract_object_index,
-//                   (graphene::db::object),
-//                   (owner)
-//                   (contract_id)
-//                   (state)
-//                  )
-

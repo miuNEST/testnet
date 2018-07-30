@@ -1222,9 +1222,8 @@ public:
         {
             FC_ASSERT( !self.is_locked());
 
-            std::ifstream input(bytecode_file, std::fstream::binary);
-            std::vector<char> buffer((std::istreambuf_iterator<char>(input)),
-                                             std::istreambuf_iterator<char>());
+            std::ifstream input(bytecode_file, std::fstream::binary | std::fstream::in);
+            std::vector<char> buffer((std::istreambuf_iterator<char>(input)), std::istreambuf_iterator<char>());
             FC_ASSERT(!buffer.empty());
 
             return deploy_contract(fc::base64_encode(&buffer[0], buffer.size()), 

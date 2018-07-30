@@ -31,7 +31,7 @@
 
 namespace graphene { namespace chain {
 
-bool database::update_contract_state(const contract_addr_type & contract_addr, uint8_t state)
+bool database::update_contract_activate_status(const contract_addr_type & contract_addr, bool activated)
 {
     try
     {
@@ -40,16 +40,18 @@ bool database::update_contract_state(const contract_addr_type & contract_addr, u
         if (itr == index.end())
             return false;
 
-        const auto &_contract = find(itr->get_id()); 
-        modify(*_contract, 
+        const auto &contract_itr = find(itr->get_id());
+        FC_ASSERT(contract_itr->activated != activated, "smart contract already activated/deactivated");
+
+        modify(*contract_itr,
             [&](contract_object & b)
             {
-                b.state = state;
+                b.activated = activated;
             }
         );
 
         return true;
-    } FC_CAPTURE_AND_RETHROW((contract_addr)(state))
+    } FC_CAPTURE_AND_RETHROW((contract_addr)(activated))
 }
 
 

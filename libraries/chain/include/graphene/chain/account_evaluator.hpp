@@ -76,6 +76,11 @@ public:
 
    void_result do_evaluate(const smart_contract_deploy_operation& o);
    object_id_type do_apply(const smart_contract_deploy_operation& o);
+private:
+    string construct_smart_contract(const string &bytecode,
+                                    const contract_addr_type &contract_addr,
+                                    const string &construct_data,
+                                    const string &abi_json);
 };
 
 class smart_contract_activate_evaluator : public evaluator<smart_contract_activate_evaluator>

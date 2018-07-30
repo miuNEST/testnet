@@ -301,9 +301,9 @@ object_id_type smart_contract_deploy_evaluator::do_apply(const smart_contract_de
                 obj.construct_data      = o.construct_data;
                 obj.abi_json            = o.abi_json;
                 obj.contract_name       = o.contract_name;
-                obj.state               = 1;                 //activated
+                obj.activated           = true;
 
-                ilog("deploy smart contract, addr: ${a}, name: ${n}", ("a", obj.contract_addr)("n", obj.contract_name));
+                ilog("deployed smart contract, addr: ${a}, name: ${n}", ("a", obj.contract_addr)("n", obj.contract_name));
             }
         );
 
@@ -337,10 +337,10 @@ void_result smart_contract_activate_evaluator::do_apply(const smart_contract_act
         FC_ASSERT(contract_obj->owner == op.activator, "only owner ${o} can activate smart contract ${c}",
             ("o", contract_obj->owner)("c", op.contract_addr));
 
-        ilog("activated smart contract, addr: ${a}, name: ${n}",
+        ilog("try activating smart contract, addr: ${a}, name: ${n}",
             ("a", contract_obj->contract_addr)("n", contract_obj->contract_name));
 
-        d.update_contract_state(op.contract_addr, 1);
+        d.update_contract_activate_status(op.contract_addr, true);
         return void_result();
     } FC_CAPTURE_AND_RETHROW((op))
 }
@@ -371,10 +371,10 @@ void_result smart_contract_deactivate_evaluator::do_apply(const smart_contract_d
         FC_ASSERT(contract_obj->owner == op.deactivator, "only owner ${o} can deactivate smart contract ${c}",
             ("o", contract_obj->owner)("c", op.contract_addr));
 
-        ilog("deactivated smart contract, addr: ${a}, name: ${n}",
+        ilog("try deactivating smart contract, addr: ${a}, name: ${n}",
             ("a", contract_obj->contract_addr)("n", contract_obj->contract_name));
 
-        d.update_contract_state(op.contract_addr, 0);
+        d.update_contract_activate_status(op.contract_addr, false);
         return void_result();
     } FC_CAPTURE_AND_RETHROW((op))
 }
@@ -405,7 +405,7 @@ void_result smart_contract_kill_evaluator::do_apply(const smart_contract_kill_op
         FC_ASSERT(contract_obj->owner == op.killer, "only owner ${o} can kill smart contract ${c}",
             ("o", contract_obj->owner)("c", op.contract_addr));
 
-        ilog("killed smart contract, addr: ${a}, name: ${n}",
+        ilog("try killing smart contract, addr: ${a}, name: ${n}",
             ("a", contract_obj->contract_addr)("n", contract_obj->contract_name));
 
         db().remove(*contract_obj);

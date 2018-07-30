@@ -283,7 +283,7 @@ namespace graphene { namespace chain {
                operation::tag<typename EvaluatorType::operation_type>::value].reset( new op_evaluator_impl<EvaluatorType>() );
          }
 
-         bool update_contract_state(const contract_addr_type &contract_addr, uint8_t state);
+         bool update_contract_activate_status(const contract_addr_type &contract_addr, bool activated);
 
         //vector<optional<contract_object>> find_contract_addrs(vector<uint64_t> contract_addrs)
         //{
