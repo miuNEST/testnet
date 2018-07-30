@@ -286,7 +286,6 @@ object_id_type smart_contract_deploy_evaluator::do_apply(const smart_contract_de
     try
     {
         FC_ASSERT(!o.abi_json.empty(), "empty abi not allowed for smart contract");
-        auto &v = fc::json::from_string(o.abi_json);
 
         contract_addr_type rehash = fc::sha256::hash(o.bytecode + o.abi_json + o.construct_data);
         FC_ASSERT(o.contract_addr == rehash, "bad hash for smart contract");
