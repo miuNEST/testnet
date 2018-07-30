@@ -314,8 +314,6 @@ void_result smart_contract_activate_evaluator::do_evaluate(const smart_contract_
 {
     try
     {
-        const database &d = db();
-
         //TODO:
         
         return void_result();
@@ -348,8 +346,6 @@ void_result smart_contract_deactivate_evaluator::do_evaluate(const smart_contrac
 {
     try
     {
-        const database &d = db();
-
         //TODO:
         
         return void_result();
@@ -382,8 +378,6 @@ void_result smart_contract_kill_evaluator::do_evaluate(const smart_contract_kill
 {
     try
     {
-        const database &d = db();
-
         //TODO:
 
         return void_result();
@@ -417,8 +411,6 @@ void_result smart_contract_call_evaluator::do_evaluate(const smart_contract_call
 {
     try
     {
-        const database& d = db();
-
         //TODO:
 
         return void_result();
