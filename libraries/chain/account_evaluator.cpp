@@ -291,7 +291,7 @@ object_id_type smart_contract_deploy_evaluator::do_apply(const smart_contract_de
         FC_ASSERT(o.contract_addr == rehash, "bad hash for smart contract");
 
         database &d = db();
-        const auto & new_smart_contract_object = db().create<contract_object>(
+        const auto & new_smart_contract_object = d.create<contract_object>(
             [&](contract_object &obj)
             {
                 obj.owner               = o.owner;
@@ -301,6 +301,7 @@ object_id_type smart_contract_deploy_evaluator::do_apply(const smart_contract_de
                 obj.abi_json            = o.abi_json;
                 obj.contract_name       = o.contract_name;
                 obj.activated           = true;
+                obj.contract_state      = construct_smart_contract(o.bytecode, o.contract_addr, o.construct_data, o.abi_json);
 
                 ilog("deployed smart contract, addr: ${a}, name: ${n}", ("a", obj.contract_addr)("n", obj.contract_name));
             }
@@ -421,18 +422,26 @@ void_result smart_contract_call_evaluator::do_apply(const smart_contract_call_op
 {
     try
     {
-        //TODO: save/load smart contract state variables.
+        auto &d = db();
 
-        auto & index = db().get_index_type<contract_index>().indices().get<by_contract_addr>();
+        auto & index = d.get_index_type<contract_index>().indices().get<by_contract_addr>();
         auto itr = index.find(op.contract_addr);
         FC_ASSERT(itr != index.end(), "smart contract not found: ${a}", ("a", op.contract_addr));
 
         const auto &contract_obj = db().find(itr->get_id());
 
-        ilog("call smart contract, addr: ${a}, name: ${n}, call data ${d}",
+        ilog("try calling smart contract, addr: ${a}, name: ${n}, call data ${d}",
             ("a", contract_obj->contract_addr)("n", contract_obj->contract_name)("d", op.call_data));
 
-        invoke_smart_contract(contract_obj->bytecode, contract_obj->contract_addr, op.call_data, contract_obj->abi_json, "");
+        FC_ASSERT(contract_obj->activated, "smart contract must be activated before calling it");
+
+        d.modify(*contract_obj,
+            [&](contract_object & b)
+            {
+                b.contract_state = call_smart_contract(contract_obj->bytecode, contract_obj->contract_addr,
+                                                        op.call_data, contract_obj->abi_json, contract_obj->contract_state);
+            }
+        );
 
         return void_result();
     } FC_CAPTURE_AND_RETHROW((op))

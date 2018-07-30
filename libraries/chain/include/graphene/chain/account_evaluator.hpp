@@ -118,7 +118,7 @@ public:
    void_result do_evaluate(const smart_contract_call_operation& o);
    void_result do_apply(const smart_contract_call_operation& o);
 private:
-    string invoke_smart_contract(const string &bytecode,
+    string call_smart_contract(const string &bytecode,
                                  const contract_addr_type &contract_addr,
                                  const string &call_data,
                                  const string &abi_json,
