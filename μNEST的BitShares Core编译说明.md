@@ -17,8 +17,8 @@ sudo apt-get install libboost-all-dev libdb++-dev doxygen
 
 ```
 cd ~
-git clone https://github.com/miuNEST/bitshares-core.git
-cd bitshares-core
+git clone https://github.com/miuNEST/testnet.git
+cd testnet
 git submodule update --init --recursive
 cmake  -DCMAKE_BUILD_TYPE=Release .
 make -j 4
@@ -143,8 +143,8 @@ http://download.oracle.com/otn/berkeley-db/db-18.1.25.zip
 ```
 c:
 cd c:\bts
-git clone https://github.com/miuNEST/bitshares-core.git
-cd bitshares-core
+git clone https://github.com/miuNEST/testnet.git
+cd testnet
 git submodule update --init --recursive
 ```
 
@@ -232,8 +232,8 @@ brew link --force openssl
 
 ```
 cd ~
-git clone https://github.com/miuNEST/bitshares-core.git
-cd bitshares-core
+git clone https://github.com/miuNEST/testnet.git
+cd testnet
 git submodule update --init --recursive
 cmake -DBOOST_ROOT=/usr/local/opt/boost@1.57 -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl .
 make -j 4

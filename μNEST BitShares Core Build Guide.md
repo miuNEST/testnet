@@ -18,8 +18,8 @@ Same steps as those on Ubuntu 14.04 LTS (64-bit):
 
 ```
 cd ~
-git clone https://github.com/miuNEST/bitshares-core.git
-cd bitshares-core
+git clone https://github.com/miuNEST/testnet.git
+cd testnet
 git submodule update --init --recursive
 cmake  -DCMAKE_BUILD_TYPE=Release .
 make -j 4
@@ -169,8 +169,8 @@ Optional, not supported yet.
 ```
 c:
 cd c:\bts
-git clone https://github.com/miuNEST/bitshares-core.git
-cd bitshares-core
+git clone https://github.com/miuNEST/testnet.git
+cd testnet
 git submodule update --init --recursive
 ```
 
@@ -265,8 +265,8 @@ In cse they are not the version we required, we can use Boost, OpenSSL directory
 
 ```
 cd ~
-git clone https://github.com/miuNEST/bitshares-core.git
-cd bitshares-core
+git clone https://github.com/miuNEST/testnet.git
+cd testnet
 git submodule update --init --recursive
 cmake -DBOOST_ROOT=/usr/local/opt/boost@1.57 -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl .
 make -j 4
