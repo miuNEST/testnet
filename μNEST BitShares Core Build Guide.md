@@ -25,18 +25,26 @@ cmake  -DCMAKE_BUILD_TYPE=Release .
 make -j 4
 ```
 
-## Windows
+## Windows (64-bit)
 
 On Windows, the final result is witness_node.exe and cli_wallet.exe.
 
 ### System Requirements:
 
 1. Windows 64-bit only.
-2. Use Visual Studio 2013 or Visual Studio 2015, Visual Studio2017 is not supported.
+2. Use Visual Studio 2013 Update 5 or Visual Studio 2015 Update 1. Visual Studio 2015 Update 3, Visual Studio2017 is not supported.
 
-Below is an example on Visual Studio 2013 Update 5, with assumption the working directory is c:\bts. Trivial difference on Visual Studio 2015.
+Below is an example on Visual Studio 2013 Update 5, with assumption the working directory is c:\bts.
+
+Trivial difference on Visual Studio 2015, they are:
+
+1. Compile command window use VS2015 x64 Native Tools Command Prompt.
+2. Warning message "Unknown compiler version" when building Boost 1.57 could be ignored.
+3. Build LibCurl、Berkeley DB through *.sln project in VS2015.
+4. Choose Visual Studio 14 2015 Win64 in CMake building window.
 
 
+### Open Visual Studio Command line
 
 Start VS2013 x64 Native Tools Command Prompt in Windows Start Menu. This equals to the following command, by which will open a DOS command line prompt.
 
@@ -157,21 +165,18 @@ Optional, not supported yet.
 
 ### Download μNEST BitShares Core Source Code
 
-git checkout xxx in following commands is optional to checkout to a particular xxx tag.
-The default branch is master.
 
 ```
 c:
 cd c:\bts
 git clone https://github.com/miuNEST/bitshares-core.git
 cd bitshares-core
-git checkout XXX (switch to a particular tag XXX)
 git submodule update --init --recursive
 ```
 
 ### Create Build Script
 
-The content of c:\bts\setenv_x64.bat :
+The content of c:\bts\setenv_x64.bat, which are used by CMake to locate libraries:
 
 ```
 @echo off
@@ -203,6 +208,7 @@ In the CMake interface:
 
 Set to c:/bts/bitshares-core in "Where is source code"，
 Set to c:/bts/bin in "Where to build binaries", click "Configure" and choose Visual Studio 12 2013 Win64 in the pop up menu.
+Since we doesn't build Debug version of OpenSSL, we need to set LIB_EAY_DEBUG,SSL_EAY_DEBUG for CMake to setup properly.
 Then click Generate to generate VS2013 project file.
 
 Tips:
@@ -228,7 +234,44 @@ In case error like msvcp120.dll, msvcr120.dll not found are encountered when you
 
 ## OS X
 
-Coming soon...
+### Install XCode
+
+Install in macOS App Store. Refer to <https://guide.macports.org/#installing.xcode>.
+
+### Install Homebrew
+
+Run the following command in macOS terminal. Refer to <https://brew.sh/>.
+
+```
+/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+```
+
+### Install Dependencies
+
+Boost available version 1.57~1.65, OpenSSL available versiono 1.0.1,1.0.2.
+
+```
+brew doctor
+brew update
+brew install boost boost@1.57 cmake git openssl autoconf automake berkeley-db libtool
+brew link --force openssl
+```
+
+After installation, run this command in macOS terminal "ls -l /usr/local/opt/boost" to show /usr/local/opt/boost is linked to which Boost version.
+The same as /usr/local/opt/openssl. 
+In cse they are not the version we required, we can use Boost, OpenSSL directory with specific version number in CMake command line.
+
+### Build μNEST BitShares Core
+
+```
+cd ~
+git clone https://github.com/miuNEST/bitshares-core.git
+cd bitshares-core
+git submodule update --init --recursive
+cmake -DBOOST_ROOT=/usr/local/opt/boost@1.57 -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl .
+make -j 4
+```
+
 
 
 
