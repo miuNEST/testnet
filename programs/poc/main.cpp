@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2015-2017 Cryptonomex, Inc., and contributors.
+ * Copyright (c) 2018- μNEST Foundation, and contributors.
  *
  * The MIT License
  *
