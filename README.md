@@ -1,244 +1,293 @@
-BitShares Core
-==============
+# μNEST Core Build Guide
 
-[Build Status](https://travis-ci.org/bitshares/bitshares-core/branches):
+Author:μNEST dev team, http://iotee.io
 
-`master` | `develop` | `hardfork` | `testnet` | `bitshares-fc` 
- --- | --- | --- | --- | ---
- [![](https://travis-ci.org/bitshares/bitshares-core.svg?branch=master)](https://travis-ci.org/bitshares/bitshares-core) | [![](https://travis-ci.org/bitshares/bitshares-core.svg?branch=develop)](https://travis-ci.org/bitshares/bitshares-core) | [![](https://travis-ci.org/bitshares/bitshares-core.svg?branch=hardfork)](https://travis-ci.org/bitshares/bitshares-core) | [![](https://travis-ci.org/bitshares/bitshares-core.svg?branch=testnet)](https://travis-ci.org/bitshares/bitshares-core) | [![](https://travis-ci.org/bitshares/bitshares-fc.svg?branch=master)](https://travis-ci.org/bitshares/bitshares-fc) 
 
 
-* [Getting Started](#getting-started)
-* [Support](#support)
-* [Using the API](#using-the-api)
-* [Accessing restricted API's](#accessing-restricted-apis)
-* [FAQ](#faq)
-* [License](#license)
+## Ubuntu 16.04 LTS (64-bit)
 
-BitShares Core is the BitShares blockchain implementation and command-line interface.
-The web wallet is [BitShares UI](https://github.com/bitshares/bitshares-ui).
+Install Dependencies:
 
-Visit [BitShares.org](https://bitshares.org/) to learn about BitShares and join the community at [BitSharesTalk.org](https://bitsharestalk.org/).
+```
+sudo apt-get install libboost-all-dev libdb++-dev
+```
 
-**NOTE:** The official BitShares git repository location, default branch, and submodule remotes were recently changed. Existing
-repositories can be updated with the following steps:
+The Boost which ships with 了Ubuntu 16.04 LTS (64-bit) is version 1.58, so it is not necessary to build Boost by yourself and not necessary to set Boost environment variable.
 
-    git remote set-url origin https://github.com/bitshares/bitshares-core.git
-    git checkout master
-    git remote set-head origin --auto
-    git pull
-    git submodule sync --recursive
-    git submodule update --init --recursive
+Same steps as those on Ubuntu 14.04 LTS (64-bit):
 
-Getting Started
----------------
-Build instructions and additional documentation are available in the
-[wiki](https://github.com/bitshares/bitshares-core/wiki).
+```
+cd ~
+git clone https://github.com/miuNEST/testnet.git
+cd testnet
+git submodule update --init --recursive
+cmake  -DCMAKE_BUILD_TYPE=Release .
+make -j 4
+```
 
-We recommend building on Ubuntu 16.04 LTS, and the build dependencies may be installed with:
+## Windows (64-bit)
 
-    sudo apt-get update
-    sudo apt-get install autoconf cmake git libboost-all-dev libssl-dev g++ libcurl4-openssl-dev
+On Windows, the final result is witness_node.exe and cli_wallet.exe.
 
-To build after all dependencies are installed:
+### System Requirements:
 
-    git clone https://github.com/bitshares/bitshares-core.git
-    cd bitshares-core
-    git checkout <LATEST_RELEASE_TAG>
-    git submodule update --init --recursive
-    cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo .
-    make
+1. Windows 64-bit only.
+2. Use Visual Studio 2013 Update 5 or Visual Studio 2015 Update 1. Visual Studio 2015 Update 3, Visual Studio2017 is not supported.
 
-**NOTE:** BitShares requires an [OpenSSL](https://www.openssl.org/) version in the 1.0.x series. OpenSSL 1.1.0 and newer are NOT supported. If your system OpenSSL version is newer, then you will need to manually provide an older version of OpenSSL and specify it to CMake using `-DOPENSSL_INCLUDE_DIR`, `-DOPENSSL_SSL_LIBRARY`, and `-DOPENSSL_CRYPTO_LIBRARY`.
+Below is an example on Visual Studio 2013 Update 5, with assumption the working directory is c:\bts.
 
-**NOTE:** BitShares requires a [Boost](http://www.boost.org/) version in the range [1.57, 1.63]. Versions earlier than
-1.57 or newer than 1.63 are NOT supported. If your system Boost version is newer, then you will need to manually build
-an older version of Boost and specify it to CMake using `DBOOST_ROOT`.
+Trivial difference on Visual Studio 2015, they are:
 
-After building, the witness node can be launched with:
+1. Compile command window use VS2015 x64 Native Tools Command Prompt.
+2. Warning message "Unknown compiler version" when building Boost 1.57 could be ignored.
+3. Build LibCurl、Berkeley DB through *.sln project in VS2015.
+4. Choose Visual Studio 14 2015 Win64 in CMake building window.
 
-    ./programs/witness_node/witness_node
 
-The node will automatically create a data directory including a config file. It may take several hours to fully synchronize
-the blockchain. After syncing, you can exit the node using Ctrl+C and setup the command-line wallet by editing
-`witness_node_data_dir/config.ini` as follows:
+### Open Visual Studio Command line
 
-    rpc-endpoint = 127.0.0.1:8090
+Start VS2013 x64 Native Tools Command Prompt in Windows Start Menu. This equals to the following command, by which will open a DOS command line prompt.
 
-**NOTE:** By default the witness node will start in reduced memory ram mode by using some of the commands detailed in [Memory reduction for nodes](https://github.com/bitshares/bitshares-core/wiki/Memory-reduction-for-nodes).
-In order to run a full node with all the account history you need to remove `partial-operations` and `max-ops-per-account` from your config file. Please note that currently(2017-12-23) a full node need 54GB of RAM to operate and required memory is growing fast.
 
-After starting the witness node again, in a separate terminal you can run:
+```
+%comspec% /k ""C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\vcvarsall.bat"" amd64
+```
 
-    ./programs/cli_wallet/cli_wallet
+All the following commands should be executed in this console until special indication.
 
-Set your inital password:
+### Build OpenSSL
 
-    >>> set_password <PASSWORD>
-    >>> unlock <PASSWORD>
+Both OpenSSL 1.0.1 and 1.0.2 work fine, except OpenSSL 1.1.0.
 
-To import your initial balance:
 
-    >>> import_balance <ACCOUNT NAME> [<WIF_KEY>] true
+Download OpenSSL source code, e.g. 1.0.2o, and extract it to C:\bts\openssl-1.0.2o.
 
-If you send private keys over this connection, `rpc-endpoint` should be bound to localhost for security.
+https://www.openssl.org/source/
 
-Use `help` to see all available wallet commands. Source definition and listing of all commands is available
-[here](https://github.com/bitshares/bitshares-core/blob/master/libraries/wallet/include/graphene/wallet/wallet.hpp).
+https://www.openssl.org/source/openssl-1.0.2o.tar.gz
 
-Support
--------
-Technical support is available in the [BitSharesTalk technical support subforum](https://bitsharestalk.org/index.php?board=45.0).
 
-BitShares Core bugs can be reported directly to the [issue tracker](https://github.com/bitshares/bitshares-core/issues).
 
-BitShares UI bugs should be reported to the [UI issue tracker](https://github.com/bitshares/bitshares-ui/issues)
+Install Perl, 32 or 64-bit is fine. Make sure setup the proper PATH environment variable.
 
-Up to date online Doxygen documentation can be found at [Doxygen](https://bitshares.org/doxygen/hierarchy.html)
+https://www.activestate.com/activeperl/downloads
 
-Using the API
--------------
 
-We provide several different API's.  Each API has its own ID.
-When running `witness_node`, initially two API's are available:
-API 0 provides read-only access to the database, while API 1 is
-used to login and gain access to additional, restricted API's.
+Install NASM for compiling assembly code in OpenSSL. Make sure setup the proper PATH environment variable.
 
-Here is an example using `wscat` package from `npm` for websockets:
+https://www.nasm.us/
 
-    $ npm install -g wscat
-    $ wscat -c ws://127.0.0.1:8090
-    > {"id":1, "method":"call", "params":[0,"get_accounts",[["1.2.0"]]]}
-    < {"id":1,"result":[{"id":"1.2.0","annotations":[],"membership_expiration_date":"1969-12-31T23:59:59","registrar":"1.2.0","referrer":"1.2.0","lifetime_referrer":"1.2.0","network_fee_percentage":2000,"lifetime_referrer_fee_percentage":8000,"referrer_rewards_percentage":0,"name":"committee-account","owner":{"weight_threshold":1,"account_auths":[],"key_auths":[],"address_auths":[]},"active":{"weight_threshold":6,"account_auths":[["1.2.5",1],["1.2.6",1],["1.2.7",1],["1.2.8",1],["1.2.9",1],["1.2.10",1],["1.2.11",1],["1.2.12",1],["1.2.13",1],["1.2.14",1]],"key_auths":[],"address_auths":[]},"options":{"memo_key":"GPH1111111111111111111111111111111114T1Anm","voting_account":"1.2.0","num_witness":0,"num_committee":0,"votes":[],"extensions":[]},"statistics":"2.7.0","whitelisting_accounts":[],"blacklisting_accounts":[]}]}
 
-We can do the same thing using an HTTP client such as `curl` for API's which do not require login or other session state:
 
-    $ curl --data '{"jsonrpc": "2.0", "method": "call", "params": [0, "get_accounts", [["1.2.0"]]], "id": 1}' http://127.0.0.1:8090/rpc
-    {"id":1,"result":[{"id":"1.2.0","annotations":[],"membership_expiration_date":"1969-12-31T23:59:59","registrar":"1.2.0","referrer":"1.2.0","lifetime_referrer":"1.2.0","network_fee_percentage":2000,"lifetime_referrer_fee_percentage":8000,"referrer_rewards_percentage":0,"name":"committee-account","owner":{"weight_threshold":1,"account_auths":[],"key_auths":[],"address_auths":[]},"active":{"weight_threshold":6,"account_auths":[["1.2.5",1],["1.2.6",1],["1.2.7",1],["1.2.8",1],["1.2.9",1],["1.2.10",1],["1.2.11",1],["1.2.12",1],["1.2.13",1],["1.2.14",1]],"key_auths":[],"address_auths":[]},"options":{"memo_key":"GPH1111111111111111111111111111111114T1Anm","voting_account":"1.2.0","num_witness":0,"num_committee":0,"votes":[],"extensions":[]},"statistics":"2.7.0","whitelisting_accounts":[],"blacklisting_accounts":[]}]}
+Execute following command to compile:
 
-API 0 is accessible using regular JSON-RPC:
+```
+set PATH=C:\Program Files\NASM;%PATH%
+c:
+cd C:\bts\openssl-1.0.2o
+perl Configure VC-WIN64A --prefix=C:\bts\openssl-1.0.2o-x64-release-static
+ms\do_win64a
+nmake -f ms\nt.mak
+nmake -f ms\nt.mak install
+```
 
-    $ curl --data '{"jsonrpc": "2.0", "method": "get_accounts", "params": [["1.2.0"]], "id": 1}' http://127.0.0.1:8090/rpc
+After installation, headers and libs will be copied to C:\bts\openssl-1.0.2o-x64-release-static.
 
-Accessing restricted API's
---------------------------
+### Build Boost
 
-You can restrict API's to particular users by specifying an `api-access` file in `config.ini` or by using the `--api-access /full/path/to/api-access.json` startup node command.  Here is an example `api-access` file which allows
-user `bytemaster` with password `supersecret` to access four different API's, while allowing any other user to access the three public API's
-necessary to use the wallet:
+Boost 1.57 ~ 1.65 should work, while 1.57 is recommended. Since Boost relies on compiler features, more updated version more prone to bug.
 
-    {
-       "permission_map" :
-       [
-          [
-             "bytemaster",
-             {
-                "password_hash_b64" : "9e9GF7ooXVb9k4BoSfNIPTelXeGOZ5DrgOYMj94elaY=",
-                "password_salt_b64" : "INDdM6iCi/8=",
-                "allowed_apis" : ["database_api", "network_broadcast_api", "history_api", "network_node_api"]
-             }
-          ],
-          [
-             "*",
-             {
-                "password_hash_b64" : "*",
-                "password_salt_b64" : "*",
-                "allowed_apis" : ["database_api", "network_broadcast_api", "history_api"]
-             }
-          ]
-       ]
-    }
 
-Passwords are stored in `base64` as salted `sha256` hashes.  A simple Python script, `saltpass.py` is avaliable to obtain hash and salt values from a password.
-A single asterisk `"*"` may be specified as username or password hash to accept any value.
 
-With the above configuration, here is an example of how to call `add_node` from the `network_node` API:
+Download Boost and extract to c:\bts\boost_1_57_0.
 
-    {"id":1, "method":"call", "params":[1,"login",["bytemaster", "supersecret"]]}
-    {"id":2, "method":"call", "params":[1,"network_node",[]]}
-    {"id":3, "method":"call", "params":[2,"add_node",["127.0.0.1:9090"]]}
+https://sourceforge.net/projects/boost/files/boost/
 
-Note, the call to `network_node` is necessary to obtain the correct API identifier for the network API.  It is not guaranteed that the network API identifier will always be `2`.
 
-Since the `network_node` API requires login, it is only accessible over the websocket RPC.  Our `doxygen` documentation contains the most up-to-date information
-about API's for the [witness node](https://bitshares.github.io/doxygen/namespacegraphene_1_1app.html) and the
-[wallet](https://bitshares.github.io/doxygen/classgraphene_1_1wallet_1_1wallet__api.html).
-If you want information which is not available from an API, it might be available
-from the [database](https://bitshares.github.io/doxygen/classgraphene_1_1chain_1_1database.html);
-it is fairly simple to write API methods to expose database methods.
 
-FAQ
----
+Execute following command to compile:
 
-- Is there a way to generate help with parameter names and method descriptions?
+```
+c:
+cd c:\bts\boost_1_57_0
+bootstrap
+.\b2.exe address-model=64
+```
 
-    Yes. Documentation of the code base, including APIs, can be generated using Doxygen. Simply run `doxygen` in this directory.
+### Download CMake
 
-    If both Doxygen and perl are available in your build environment, the CLI wallet's `help` and `gethelp`
-    commands will display help generated from the doxygen documentation.
+Download 64-bit version. Suppose to put at c:\bts\cmake-3.11.2-win64-x64.
 
-    If your CLI wallet's `help` command displays descriptions without parameter names like
-        `signed_transaction transfer(string, string, string, string, string, bool)`
-    it means CMake was unable to find Doxygen or perl during configuration.  If found, the
-    output should look like this:
-        `signed_transaction transfer(string from, string to, string amount, string asset_symbol, string memo, bool broadcast)`
+https://cmake.org/download/
 
-- Is there a way to allow external program to drive `cli_wallet` via websocket, JSONRPC, or HTTP?
+<https://cmake.org/files/v3.11/cmake-3.11.2-win64-x64.zip> 
 
-    Yes. External programs may connect to the CLI wallet and make its calls over a websockets API. To do this, run the wallet in
-    server mode, i.e. `cli_wallet -s "127.0.0.1:9999"` and then have the external program connect to it over the specified port
-    (in this example, port 9999).
+### Install git
 
-- Is there a way to access methods which require login over HTTP?
+https://git-scm.com/download/win 
 
-    No.  Login is inherently a stateful process (logging in changes what the server will do for certain requests, that's kind
-    of the point of having it).  If you need to track state across HTTP RPC calls, you must maintain a session across multiple
-    connections.  This is a famous source of security vulnerabilities for HTTP applications.  Additionally, HTTP is not really
-    designed for "server push" notifications, and we would have to figure out a way to queue notifications for a polling client.
+### Build LibCurl
 
-    Websockets solves all these problems.  If you need to access Graphene's stateful methods, you need to use Websockets.
+https://curl.haxx.se/download.html
 
-- What is the meaning of `a.b.c` numbers?
+<https://curl.haxx.se/download/curl-7.60.0.zip> 
 
-    The first number specifies the *space*.  Space 1 is for protocol objects, 2 is for implementation objects.
-    Protocol space objects can appear on the wire, for example in the binary form of transactions.
-    Implementation space objects cannot appear on the wire and solely exist for implementation
-    purposes, such as optimization or internal bookkeeping.
+Suppose to put at c:\bts\curl-7.60.0. Open the project c:\bts\curl-7.60.0\projects\Windows\VC12\curl-all.sln with VS2013. Build the configuration with DLL Release + x64 tag.
 
-    The second number specifies the *type*.  The type of the object determines what fields it has.  For a
-    complete list of type ID's, see `enum object_type` and `enum impl_object_type` in
-    [types.hpp](https://github.com/bitshares/bitshares-2/blob/bitshares/libraries/chain/include/graphene/chain/protocol/types.hpp).
+The result is:
 
-    The third number specifies the *instance*.  The instance of the object is different for each individual
-    object.
+    c:\bts\curl-7.60.0\build\Win64\VC12\DLL Release\libcurl.lib
 
-- The answer to the previous question was really confusing.  Can you make it clearer?
+    c:\bts\curl-7.60.0\build\Win64\VC12\DLL Release\libcurl.dll
 
-    All account ID's are of the form `1.2.x`.  If you were the 9735th account to be registered,
-    your account's ID will be `1.2.9735`.  Account `0` is special (it's the "committee account,"
-    which is controlled by the committee members and has a few abilities and restrictions other accounts
-    do not).
+Put the directory in PATH environment variable, or copy ibcurl.dll to the same directory with witness_node.exe or cli_wallet.exe.
 
-    All asset ID's are of the form `1.3.x`.  If you were the 29th asset to be registered,
-    your asset's ID will be `1.3.29`.  Asset `0` is special (it's BTS, which is considered the "core asset").
+### Build Berkeley DB
 
-    The first and second number together identify the kind of thing you're talking about (`1.2` for accounts,
-    `1.3` for assets).  The third number identifies the particular thing.
+https://www.oracle.com/technetwork/database/database-technologies/berkeleydb/downloads/index.html
 
-- How do I get the `network_add_nodes` command to work?  Why is it so complicated?
+http://download.oracle.com/otn/berkeley-db/db-18.1.25.zip
 
-    You need to follow the instructions in the "Accessing restricted API's" section to
-    allow a username/password access to the `network_node` API.  Then you need
-    to pass the username/password to the `cli_wallet` on the command line or in a config file.
+Suppose to put at c:\bts\db-18.1.25. Open the project c:\bts\db-18.1.25\build_windows\Berkeley_DB_vs2012.sln with VS2013.
+The build configuration should be the same as bitshares-core's. For example, Debug + x64 for debug version and Release + 64 for release.
 
-    It's set up this way so that the default configuration is secure even if the RPC port is
-    publicly accessible.  It's fine if your `witness_node` allows the general public to query
-    the database or broadcast transactions (in fact, this is how the hosted web UI works).  It's
-    less fine if your `witness_node` allows the general public to control which p2p nodes it's
-    connecting to.  Therefore the API to add p2p connections needs to be set up with proper access
-    controls.
- 
-License
--------
-BitShares Core is under the MIT license. See [LICENSE](https://github.com/bitshares/bitshares-core/blob/master/LICENSE.txt)
-for more information.
+The result for a Debug version is:
+
+    Header File: c:\bts\db-18.1.25\build_windows
+
+    Lib File: c:\bts\db-18.1.25\build_windows\x64\Debug
+
+Set PATH environment variable to include the directory of libdb181d.dll, and rename libdb181d.lib to db_cxx.lib.
+
+### Download Doxygen
+
+Optional, not supported yet.
+
+### Download μNEST Core Source Code
+
+
+```
+c:
+cd c:\bts
+git clone https://github.com/miuNEST/testnet.git
+cd testnet
+git submodule update --init --recursive
+```
+
+### Create Build Script
+
+The content of c:\bts\setenv_x64.bat, which are used by CMake to locate libraries:
+
+```
+@echo off
+set GRA_ROOT=c:\bts
+set OPENSSL_ROOT=%GRA_ROOT%\openssl-1.0.2o-x64-release-static
+set OPENSSL_ROOT_DIR=%OPENSSL_ROOT%
+set OPENSSL_INCLUDE_DIR=%OPENSSL_ROOT%\include
+set BOOST_ROOT=%GRA_ROOT%\boost_1_57_0
+set CMAKE_ROOT=%GRA_ROOT%\cmake-3.11.2-win64-x64
+set PATH=%BOOST_ROOT%\lib;%CMAKE_ROOT%\BIN;%PATH%
+set CURL_INCLUDE_DIR=%GRA_ROOT%\curl-7.60.0\include
+set CURL_LIB_DIR=%GRA_ROOT%\curl-7.60.0\build\Win64\VC12\DLL Release
+set BDB_INCLUDE_DIR=%GRA_ROOT%\db-18.1.25\build_windows
+set BDB_LIB_DIR=%GRA_ROOT%\db-18.1.25\build_windows\x64\Debug
+```
+
+### Run CMake
+
+Open CMake UI with following command:
+
+```
+c:
+cd C:\bts
+setenv_x64.bat
+cmake-gui
+```
+
+In the CMake interface:
+
+Set to c:/bts/bitshares-core in "Where is source code"，
+Set to c:/bts/bin in "Where to build binaries", click "Configure" and choose Visual Studio 12 2013 Win64 in the pop up menu.
+Since we doesn't build Debug version of OpenSSL, we need to set LIB_EAY_DEBUG,SSL_EAY_DEBUG for CMake to setup properly.
+Then click Generate to generate VS2013 project file.
+
+Tips:
+
+Start VS2013 in the same console as we run setenb_x64.bat. By doing so, the environment variables are inherited. Otherwise, VS2013 will report error during updating the project by CMake, which says dependencies like LibCurl and Berkeley DB are not found.
+
+```
+start "" "C:\Program Files (x86)\Microsoft Visual Studio 12.0\Common7\IDE\devenv.exe"
+```
+
+Or
+
+Set all the environment variables as Windows Global variable, so that it would be not necessary to start VS2013 from the console.
+
+### Build μNEST Core
+
+Open c:\bts\bin\testnet.sln with VS2013, choose witness_node, cli_wallet target to build and you will get witness_node.exe、cli_wallet.exe.
+
+In case error like msvcp120.dll, msvcr120.dll not found are encountered when you deploy witness_node.exe/cli_wallet.exe to another machine, two options to solve it:
+
+1. Modify project property to Use MFC in a Static Library and recompile.
+2. Install Visual C++ Redistributable Packages for Visual Studio 2013(https://www.microsoft.com/en-us/download/details.aspx?id=40784) on target machine. You could find it on local machine at C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\redist\x64.
+
+## OS X
+
+### Install XCode
+
+Install in macOS App Store. Refer to <https://guide.macports.org/#installing.xcode>.
+
+### Install Homebrew
+
+Run the following command in macOS terminal. Refer to <https://brew.sh/>.
+
+```
+/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+```
+
+### Install Dependencies
+
+Boost available version 1.57~1.65, OpenSSL available versiono 1.0.1,1.0.2.
+
+```
+brew doctor
+brew update
+brew install boost boost@1.57 cmake git openssl autoconf automake berkeley-db libtool
+brew link --force openssl
+```
+
+After installation, run this command in macOS terminal "ls -l /usr/local/opt/boost" to show /usr/local/opt/boost is linked to which Boost version.
+The same as /usr/local/opt/openssl. 
+In cse they are not the version we required, we can use Boost, OpenSSL directory with specific version number in CMake command line.
+
+### Build μNEST Core
+
+```
+cd ~
+git clone https://github.com/miuNEST/testnet.git
+cd testnet
+git submodule update --init --recursive
+cmake -DBOOST_ROOT=/usr/local/opt/boost@1.57 -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl .
+make -j 4
+```
+
+
+
+
+## Setup testnet
+
+Refer to bitshares official doc: http://docs.bitshares.org/testnet/private-testnet.html
+
+
+
+## Reference
+
+https://github.com/bitshares/bitshares-core/wiki/BUILD_UBUNTU
+
+https://github.com/bitshares/bitshares-core/wiki/BUILD_WIN32
+
+https://github.com/bitshares/bitshares-core/wiki/Building-on-OS-X
+
+[https://github.com/abitmore/bts-cn-docs/blob/master/使用VisualStudio2015编译BitShares-Core.txt](https://github.com/abitmore/bts-cn-docs/blob/master/使用VisualStudio2015编译BitShares-Core.txt)
+
