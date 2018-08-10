@@ -1,4 +1,4 @@
-# μNEST的BitShares Core编译说明
+# μNEST的Core编译说明
 
 作者：μNEST开发组，http://iotee.io
 
@@ -13,7 +13,7 @@ sudo apt-get update
 sudo apt-get install libboost-all-dev libdb++-dev doxygen
 ```
 
-### 编译μNEST的BitShares Core
+### 编译μNEST的Core
 
 ```
 cd ~
@@ -138,7 +138,7 @@ http://download.oracle.com/otn/berkeley-db/db-18.1.25.zip
 
 可选。暂不支持生成Doxygen文档。
 
-### 下载μNEST的BitShares Core源码
+### 下载μNEST的Core源码
 
 ```
 c:
@@ -192,9 +192,9 @@ start "" "C:\Program Files (x86)\Microsoft Visual Studio 12.0\Common7\IDE\devenv
 
 还有个办法是将setenv_x64.bat中的环境变量统一设置为Windows的系统全局环境变量，这样无需每次从运行setenv_x64.bat的命令行窗口中来启动VS2013的devenv.exe。
 
-### 编译μNEST的BitShares Core
+### 编译μNEST的Core
 
-用VS2013的IDE打开工程c:\bts\bin\BitShares.sln，右键分别选择witness_node、cli_wallet这两个工程编译，得到witness_node.exe、cli_wallet.exe。
+用VS2013的IDE打开工程c:\bts\bin\testnet.sln，右键分别选择witness_node、cli_wallet这两个工程编译，得到witness_node.exe、cli_wallet.exe。
 
 如果将witness_node.exe、cli_wallet.exe部署到别的机器上时出现找不到msvcp120.dll、msvcr120.dll之类的错误，有两种办法解决：
 
@@ -228,7 +228,7 @@ brew link --force openssl
 
 安装后，在macOS的terminal窗口中执行命令ls -l /usr/local/opt/boost，能看到符号链接/usr/local/opt/boost具体指向的是Boost的哪个版本。符号链接/usr/local/opt/openssl也类似。如果这两个符号链接指向的不是我们所要求的版本，则可以在CMake的命令行中不使用这两个符号链接，而是使用带具体版本号的的Boost、OpenSSL目录。
 
-### 编译μNEST的BitShares Core源码
+### 编译μNEST的Core源码
 
 ```
 cd ~

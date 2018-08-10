@@ -1,6 +1,6 @@
-# μNEST BitShares Core Build Guide
+# μNEST Core Build Guide
 
-Author:NEST dev team, http://iotee.io
+Author:μNEST dev team, http://iotee.io
 
 
 
@@ -163,7 +163,7 @@ Set PATH environment variable to include the directory of libdb181d.dll, and ren
 
 Optional, not supported yet.
 
-### Download μNEST BitShares Core Source Code
+### Download μNEST Core Source Code
 
 
 ```
@@ -223,9 +223,9 @@ Or
 
 Set all the environment variables as Windows Global variable, so that it would be not necessary to start VS2013 from the console.
 
-### Build μNEST BitShares Core
+### Build μNEST Core
 
-Open c:\bts\bin\BitShares.sln with VS2013, choose witness_node, cli_wallet target to build and you will get witness_node.exe、cli_wallet.exe.
+Open c:\bts\bin\testnet.sln with VS2013, choose witness_node, cli_wallet target to build and you will get witness_node.exe、cli_wallet.exe.
 
 In case error like msvcp120.dll, msvcr120.dll not found are encountered when you deploy witness_node.exe/cli_wallet.exe to another machine, two options to solve it:
 
@@ -261,7 +261,7 @@ After installation, run this command in macOS terminal "ls -l /usr/local/opt/boo
 The same as /usr/local/opt/openssl. 
 In cse they are not the version we required, we can use Boost, OpenSSL directory with specific version number in CMake command line.
 
-### Build μNEST BitShares Core
+### Build μNEST Core
 
 ```
 cd ~
