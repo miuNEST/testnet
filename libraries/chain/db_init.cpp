@@ -62,6 +62,7 @@
 #include <graphene/chain/withdraw_permission_evaluator.hpp>
 #include <graphene/chain/witness_evaluator.hpp>
 #include <graphene/chain/worker_evaluator.hpp>
+#include <graphene/chain/pio_evaluator.hpp>
 
 #include <graphene/chain/protocol/fee_schedule.hpp>
 
@@ -178,6 +179,7 @@ void database::initialize_evaluators()
    register_evaluator<smart_contract_deactivate_evaluator>();
    register_evaluator<smart_contract_kill_evaluator>();
    register_evaluator<smart_contract_call_evaluator>();
+   register_evaluator<pio_evaluator>();
 }
 
 void database::initialize_indexes()

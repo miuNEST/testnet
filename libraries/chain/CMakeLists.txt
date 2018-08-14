@@ -58,6 +58,7 @@ add_library( graphene_chain
              protocol/fee_schedule.cpp
              protocol/confidential.cpp
              protocol/vote.cpp
+             protocol/pio.cpp
 
              genesis_state.cpp
              get_config.cpp
@@ -80,6 +81,7 @@ add_library( graphene_chain
              confidential_evaluator.cpp
              special_authority.cpp
              buyback.cpp
+             pio_evaluator.cpp
 
              account_object.cpp
              asset_object.cpp

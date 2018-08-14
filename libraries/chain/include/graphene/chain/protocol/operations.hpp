@@ -35,6 +35,7 @@
 #include <graphene/chain/protocol/market.hpp>
 #include <graphene/chain/protocol/proposal.hpp>
 #include <graphene/chain/protocol/transfer.hpp>
+#include <graphene/chain/protocol/pio.hpp>
 #include <graphene/chain/protocol/vesting.hpp>
 #include <graphene/chain/protocol/withdraw_permission.hpp>
 #include <graphene/chain/protocol/witness.hpp>
@@ -99,7 +100,8 @@ namespace graphene { namespace chain {
             smart_contract_kill_operation,
             smart_contract_call_operation,
 	        bid_collateral_operation,
-            execute_bid_operation           // VIRTUAL
+            execute_bid_operation,           // VIRTUAL
+            pio_operation
          > operation;
 
    /// @} // operations group
