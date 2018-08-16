@@ -272,6 +272,10 @@ block_production_condition::block_production_condition_enum witness_plugin::mayb
       return block_production_condition::lag;
    }
 
+   // record last_irreversible_block
+   const auto& dpo = db.get_dynamic_global_properties();
+   auto o_lib = dpo.last_irreversible_block_num;
+
    auto block = db.generate_block(
       scheduled_time,
       scheduled_witness,
@@ -280,6 +284,31 @@ block_production_condition::block_production_condition_enum witness_plugin::mayb
       );
    capture("n", block.block_num())("t", block.timestamp)("c", now);
    fc::async( [this,block](){ p2p_node().broadcast(net::block_message(block)); } );
+
+   // calculate irreversible block pio reward
+   uint64_t total_contributions;
+   vector<chain::pio_operation> valid_contributions;
+   auto n_lib = dpo.last_irreversible_block_num;
+
+   for (auto block_num = o_lib + 1; block_num <= n_lib; block_num++)
+   {
+      auto block = db.fetch_block_by_number(block_num);
+
+      for (const auto& transaction : block->transactions)
+      {
+         for (const auto& op : transaction.operations)
+         {
+            if (op.which() != chain::operation::tag<chain::pio_operation>::value)
+               continue;
+            // challenge
+
+	    // calculate contribution and store in list
+            const auto& pop = op.get<chain::pio_operation>();
+            total_contributions += pop.contribution;
+            valid_contributions.push_back(pop);
+         }
+      }
+   }
 
    return block_production_condition::produced;
 }
