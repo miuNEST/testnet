@@ -197,7 +197,7 @@ private:
    uint32_t disk_contribution();
    uint32_t uptime_contribution();
    uint32_t l2_contribution();
-   void send_to();
+   void send_to(uint32_t contributions);
 
    fc::future<void> _contribution_collection_task;
    uint32_t _collection_period;

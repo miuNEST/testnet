@@ -34,6 +34,7 @@
 #include <iostream>
 
 using namespace graphene::poc_plugin;
+using namespace graphene::chain;
 using std::string;
 using std::vector;
 
@@ -103,7 +104,7 @@ void poc_plugin::_schedule_poc_loop()
    contributions += l2_contribution();
 
    // report contribution
-   send_to();
+   send_to(contributions);
 
    schedule_poc_loop();
 }
@@ -124,13 +125,23 @@ uint32_t poc_plugin::l2_contribution()
    return 1;
 }
 
-void poc_plugin::send_to()
+void poc_plugin::send_to(uint32_t contributions)
 {
-    websocket_endpoint endpoint;
-    int id;
+    graphene::chain::database& db = database();
+    graphene::chain::signed_transaction trx;
+    // use nathan for test
+    fc::ecc::private_key nathan_key = fc::ecc::private_key::regenerate(fc::sha256::hash(string("nathan")));
+    account_id_type contributor_id =
+         db.get_index_type<account_index>().indices().get<by_name>().find( "nathan" )->id;
+    pio_operation pio_op;
+    pio_op.from = contributor_id;
+    pio_op.rpc_addr = "none";
+    pio_op.contribution = contributions;
 
-    id = endpoint.connect(_supervisor_addr);
-    fc::usleep(fc::seconds(2));
-    endpoint.send(id, "{\"jsonrpc\": \"2.0\", \"id\": 0, \"method\": \"transfer\", \"params\": [\"nathan\", \"alpha\", 10, \"BTS\", \"good job\", true]}");
-    fc::usleep(fc::seconds(2));
+    trx.set_expiration(db.head_block_time() + fc::seconds(60));
+    trx.operations.push_back(pio_op);
+    trx.sign(nathan_key, db.get_chain_id());
+    trx.validate();
+
+    p2p_node().broadcast(graphene::net::trx_message(trx));
 }
