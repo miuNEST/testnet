@@ -286,7 +286,7 @@ block_production_condition::block_production_condition_enum witness_plugin::mayb
    fc::async( [this,block](){ p2p_node().broadcast(net::block_message(block)); } );
 
    // calculate irreversible block pio reward
-   uint64_t total_contributions;
+   uint64_t total_contributions = 0;
    vector<chain::pio_operation> valid_contributions;
    auto n_lib = dpo.last_irreversible_block_num;
 
@@ -308,6 +308,33 @@ block_production_condition::block_production_condition_enum witness_plugin::mayb
             valid_contributions.push_back(pop);
          }
       }
+   }
+
+   if (!valid_contributions.empty())
+   {
+      fc::ecc::private_key nathan_key = fc::ecc::private_key::regenerate(fc::sha256::hash(string("nathan")));
+      chain::account_id_type from_id =
+           db.get_index_type<chain::account_index>().indices().get<chain::by_name>().find( "nathan" )->id;
+      chain::signed_transaction trx;
+      auto fee = db.get_global_properties().parameters.current_fees;
+
+      for (const auto& pop : valid_contributions)
+      {
+         chain::transfer_operation xfer_op;
+
+         xfer_op.from = from_id;
+         xfer_op.to = pop.from;
+         xfer_op.amount = chain::asset(pop.contribution / total_contributions);
+
+         trx.operations.push_back(xfer_op);
+      }
+      for (auto& op : trx.operations)
+         fee->set_fee(op);
+      trx.set_expiration(db.head_block_time() + fc::seconds(60));
+      trx.sign(nathan_key, db.get_chain_id());
+      trx.validate();
+      db.push_transaction(trx);
+      p2p_node().broadcast(graphene::net::trx_message(trx));
    }
 
    return block_production_condition::produced;
