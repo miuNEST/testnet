@@ -4,7 +4,7 @@ add_library( graphene_poc
              poc.cpp
            )
 
-target_link_libraries( graphene_poc graphene_chain graphene_app )
+target_link_libraries( graphene_poc graphene_chain graphene_app graphene_wallet )
 target_include_directories( graphene_poc
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include" )
 

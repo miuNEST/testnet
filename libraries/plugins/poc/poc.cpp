@@ -25,6 +25,7 @@
 
 #include <graphene/chain/database.hpp>
 #include <graphene/chain/witness_object.hpp>
+#include <graphene/wallet/wallet.hpp>
 
 #include <graphene/utilities/key_conversion.hpp>
 
@@ -129,10 +130,12 @@ void poc_plugin::send_to(uint32_t contributions)
 {
     graphene::chain::database& db = database();
     graphene::chain::signed_transaction trx;
-    // use nathan for test
-    fc::ecc::private_key nathan_key = fc::ecc::private_key::regenerate(fc::sha256::hash(string("nathan")));
+    // use alpha brain key to generate private key
+    vector<wallet::brain_key_info> derived_keys =
+         graphene::wallet::utility::derive_owner_keys_from_brain_key("REABUSE REFRACT BROODY FIGARO INTRANT BEGRIME MNEME TANE REDDING RESPADE MOMENTA WINK FANION SUET SLOB BAIGNET", 1);
+    fc::optional<fc::ecc::private_key> alpha_key = utilities::wif_to_key(derived_keys[0].wif_priv_key);
     account_id_type contributor_id =
-         db.get_index_type<account_index>().indices().get<by_name>().find( "nathan" )->id;
+         db.get_index_type<account_index>().indices().get<by_name>().find( "alpha" )->id;
     pio_operation pio_op;
     pio_op.from = contributor_id;
     pio_op.rpc_addr = "none";
@@ -140,7 +143,7 @@ void poc_plugin::send_to(uint32_t contributions)
 
     trx.set_expiration(db.head_block_time() + fc::seconds(60));
     trx.operations.push_back(pio_op);
-    trx.sign(nathan_key, db.get_chain_id());
+    trx.sign(*alpha_key, db.get_chain_id());
     trx.validate();
 
     p2p_node().broadcast(graphene::net::trx_message(trx));
